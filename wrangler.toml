@@ -10,7 +10,7 @@ not_found_handling = "single-page-application"
 
 [[hyperdrive]]
 binding = "HYPERDRIVE"
-id = "84cd18cebe8a49f79e170ea4c5c9b6df"
+id = "f6b94c3374244577bdc2ee1fd000fe28"
 
 [vars]
 API_ALLOWED_ORIGINS = "https://cwaax.vfshj.workers.dev"
