@@ -229,6 +229,40 @@ async function withDbRetry<T>(operation: () => Promise<T>): Promise<T> {
   throw lastError;
 }
 
+/*
+ * Registration-path helper: retries a DB operation and, after a failure,
+ * drops the cached client so the next attempt opens a brand-new connection
+ * (a dead pooled connection is the usual cause of "first request fails,
+ * second one works").
+ */
+async function withFreshDbRetry<T>(
+  operation: (
+    db: NonNullable<Awaited<ReturnType<typeof getDb>>>,
+  ) => Promise<T>,
+): Promise<T | undefined> {
+  let lastError: unknown;
+
+  for (let attempt = 1; attempt <= DB_RETRY_ATTEMPTS; attempt++) {
+    try {
+      const db = await getDb();
+      if (!db) return undefined;
+      return await operation(db);
+    } catch (error) {
+      lastError = error;
+      console.warn(
+        `[Database] Query failed (attempt ${attempt}/${DB_RETRY_ATTEMPTS}):`,
+        error instanceof Error ? error.message : error,
+      );
+      _db = null; // force a new connection on the next attempt
+      if (attempt < DB_RETRY_ATTEMPTS) {
+        await delay(DB_RETRY_DELAY_MS * attempt);
+      }
+    }
+  }
+
+  throw lastError;
+}
+
 export async function getUserByEmailOrUsername(
   identifier: string,
 ) {
@@ -265,90 +299,49 @@ export async function getUserByEmailOrUsername(
 export async function getUserByEmail(
   email: string,
 ) {
-  const db = await getDb();
-
-  if (!db) {
-    return undefined;
-  }
-
-  return (
+  return withFreshDbRetry(async (db) => (
     await db
       .select()
       .from(users)
-      .where(
-        eq(
-          users.email,
-          email.toLowerCase(),
-        ),
-      )
+      .where(eq(users.email, email.toLowerCase()))
       .limit(1)
-  )[0];
+  )[0]);
 }
 
 export async function getUserByPhone(
   phone: string,
 ) {
-  const db = await getDb();
-
-  if (!db) {
-    return undefined;
-  }
-
-  return (
+  return withFreshDbRetry(async (db) => (
     await db
       .select()
       .from(users)
-      .where(
-        eq(
-          users.phone,
-          phone,
-        ),
-      )
+      .where(eq(users.phone, phone))
       .limit(1)
-  )[0];
+  )[0]);
 }
 
 export async function getUserByUsername(
   username: string,
 ) {
-  const db = await getDb();
-
-  if (!db) {
-    return undefined;
-  }
-
-  return (
+  return withFreshDbRetry(async (db) => (
     await db
       .select()
       .from(users)
-      .where(
-        eq(users.username, username),
-      )
+      .where(eq(users.username, username))
       .limit(1)
-  )[0];
+  )[0]);
 }
 
 export async function getUserByReferralCode(
   code: string,
 ) {
-  const db = await getDb();
-
-  if (!db) {
-    return undefined;
-  }
-
-  return (
+  return withFreshDbRetry(async (db) => (
     await db
       .select()
       .from(users)
-      .where(
-        eq(
-          users.referralCode,
-          code.trim().toUpperCase(),
-        ),
-      )
+      .where(eq(users.referralCode, code.trim().toUpperCase()))
       .limit(1)
-  )[0];
+  )[0]);
 }
 
 export async function createLocalUser(
@@ -361,68 +354,57 @@ export async function createLocalUser(
     phone?: string;
   },
 ) {
-  const db = await getDb();
-
-  if (!db) {
-    throw new Error(
-      "Database not available",
-    );
-  }
-
-  const openId =
-    `local_${randomUUID()}`;
+  // Generated once, outside the retry loop, so a retry can tell whether
+  // a previous attempt actually committed (idempotent insert).
+  const openId = `local_${randomUUID()}`;
 
   // The user's own referral code is derived from their (already unique,
   // alphanumeric) username, uppercased, prefixed like the rest of the
-  // brand's codes (e.g. "CWAAX-AHMED928"). Reusing the username guarantees
-  // uniqueness without a extra collision-retry loop.
-  const ownReferralCode =
-    `CWAAX-${data.username.toUpperCase()}`;
+  // brand's codes (e.g. "CWAAX-AHMED928").
+  const ownReferralCode = `CWAAX-${data.username.toUpperCase()}`;
 
   let referredById: number | undefined;
 
   if (data.referralCode?.trim()) {
-    const inviter =
-      await getUserByReferralCode(
-        data.referralCode,
-      );
+    const inviter = await getUserByReferralCode(data.referralCode);
     if (inviter) {
       referredById = inviter.id;
     }
   }
 
-  const inserted =
-    await db
+  const user = await withFreshDbRetry(async (db) => {
+    // If a previous attempt reached the database and committed before the
+    // connection dropped, return that row instead of inserting twice.
+    const existing = (
+      await db.select().from(users).where(eq(users.openId, openId)).limit(1)
+    )[0];
+    if (existing) return existing;
+
+    const inserted = await db
       .insert(users)
       .values({
         openId,
         name: data.name,
         username: data.username,
-        email:
-          data.email.toLowerCase(),
+        email: data.email.toLowerCase(),
         phone: data.phone || undefined,
-        passwordHash:
-          data.passwordHash,
+        passwordHash: data.passwordHash,
         loginMethod: "email",
         role: "user",
-        referralCode:
-          ownReferralCode,
+        referralCode: ownReferralCode,
         referredById,
       })
-      .returning({
-        id: users.id,
-      });
+      .returning({ id: users.id });
 
-  const id =
-    inserted[0]?.id ?? 0;
+    const id = inserted[0]?.id ?? 0;
 
-  return (
-    await db
-      .select()
-      .from(users)
-      .where(eq(users.id, id))
-      .limit(1)
-  )[0];
+    return (
+      await db.select().from(users).where(eq(users.id, id)).limit(1)
+    )[0];
+  });
+
+  if (!user) throw new Error("Database not available");
+  return user;
 }
 
 export async function getUserByOpenId(
