@@ -48,11 +48,21 @@ export function createTRPCClient() {
           return { Authorization: `Bearer ${token}` };
         },
         // Custom fetch to include credentials for cookie-based auth
-        fetch(url, options) {
-          return fetch(url, {
+        async fetch(url, options) {
+          const response = await fetch(url, {
             ...options,
             credentials: "include",
           });
+          // If the server (or Cloudflare) answered with an HTML page instead of
+          // JSON, show a clear message instead of "Unexpected token '<'".
+          const type = response.headers.get("content-type") ?? "";
+          if (!type.includes("json")) {
+            console.error("[trpc] Non-JSON response", response.status, type);
+            throw new Error(
+              `الخادم غير متاح حاليًا (HTTP ${response.status}). حاول مرة أخرى بعد قليل.`,
+            );
+          }
+          return response;
         },
       }),
     ],
