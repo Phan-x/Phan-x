@@ -2,7 +2,7 @@ import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 import { appRouter } from "../server/routers";
 import { createContext } from "../server/_core/context";
 import { assertServerEnvironment, configureServerEnvironment, type ServerEnvBindings } from "../server/_core/env";
-import { configureDatabase, processDueTradePayouts } from "../server/db";
+import { processDueTradePayouts, runWithDatabase } from "../server/db";
 
 type Env = ServerEnvBindings & {
   HYPERDRIVE: { connectionString: string };
@@ -40,24 +40,41 @@ function json(data: unknown, status = 200, request?: Request, env?: Env) {
 }
 
 export default {
-  async scheduled(controller: ScheduledController, env: Env): Promise<void> {
+  async scheduled(controller: ScheduledController, env: Env, ctx: ExecutionContext): Promise<void> {
     configureServerEnvironment(env);
     assertServerEnvironment();
-    configureDatabase(env.HYPERDRIVE.connectionString);
-    try {
-      const result = await processDueTradePayouts(new Date(controller.scheduledTime));
-      console.log("[Trade] scheduled payout run", result);
-    } catch (error) {
-      console.error("[Trade] scheduled payout run failed", error);
-      throw error;
-    }
+    // Own DB client for this cron run: never share connections with fetch requests.
+    await runWithDatabase(env.HYPERDRIVE.connectionString, async () => {
+      try {
+        const result = await processDueTradePayouts(new Date(controller.scheduledTime));
+        console.log("[Trade] scheduled payout run", result);
+      } catch (error) {
+        console.error("[Trade] scheduled payout run failed", error);
+        throw error;
+      }
+    }, ctx);
   },
 
-  async fetch(request: Request, env: Env): Promise<Response> {
+  async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     try {
       configureServerEnvironment(env);
       assertServerEnvironment();
-      configureDatabase(env.HYPERDRIVE.connectionString);
+      // One DB client per request (Workers cannot share sockets across requests).
+      return await runWithDatabase(
+        env.HYPERDRIVE.connectionString,
+        () => handleRequest(request, env),
+        ctx,
+      );
+    } catch (error) {
+      console.error("[Worker] Request failed", error);
+      return json({ error: "Internal server error" }, 500, request, env);
+    }
+  },
+};
+
+async function handleRequest(request: Request, env: Env): Promise<Response> {
+  {
+    try {
 
       if (request.method === "OPTIONS") {
         return withCors(new Response(null, { status: 204 }), request, env);
@@ -66,7 +83,7 @@ export default {
       const url = new URL(request.url);
 
       if (url.pathname === "/api/health") {
-        return json({ ok: true, service: "CwaAX API", timestamp: Date.now() }, 200, request, env);
+        return json({ ok: true, service: "Phan-x API", timestamp: Date.now() }, 200, request, env);
       }
 
       // Local/web logout: the browser may still have the httpOnly app_session_id
@@ -112,5 +129,5 @@ export default {
       console.error("[Worker] Request failed", error);
       return json({ error: "Internal server error" }, 500, request, env);
     }
-  },
-};
+  }
+}
