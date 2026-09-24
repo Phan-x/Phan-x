@@ -13,7 +13,7 @@ binding = "HYPERDRIVE"
 id = "f6b94c3374244577bdc2ee1fd000fe28"
 
 [vars]
-API_ALLOWED_ORIGINS = "https://cwaax.vfshj.workers.dev"
+API_ALLOWED_ORIGINS = "https://phan-x.px-x.workers.dev"
 
 [triggers]
 crons = ["* * * * *"]
