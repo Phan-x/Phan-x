@@ -1,4 +1,4 @@
-export const TRADE_DAILY_RATE = 0.035;
+export const TRADE_DAILY_RATE = 0.25;
 
 export const PHANX = {
   green: "#0B8754",
@@ -14,9 +14,27 @@ export const PHANX = {
   purple: "#7567D9",
 } as const;
 
-const PLAN_COIN_CYCLE = [
-  "USDT", "ETH", "BNB", "XRP", "SOL", "ADA", "TRX", "TON",
-  "AVAX", "DOT", "LINK", "MATIC", "LTC", "BCH", "NEAR", "UNI",
+// Abstract package tiers — no crypto logos
+const PLAN_ICONS = [
+  "diamond",
+  "stars",
+  "workspace-premium",
+  "trending-up",
+  "auto-awesome",
+  "bolt",
+  "local-fire-department",
+  "military-tech",
+] as const;
+
+const PLAN_ACCENT_COLORS = [
+  "#0B8754",
+  "#0D9488",
+  "#0891B2",
+  "#2563EB",
+  "#7C3AED",
+  "#DB2777",
+  "#D97706",
+  "#DC2626",
 ];
 
 const TRADE_AMOUNTS = [
@@ -27,9 +45,10 @@ const TRADE_AMOUNTS = [
 
 export const TRADE_PLANS = TRADE_AMOUNTS.map((amount, index) => ({
   amount,
-  // The last (highest) plan is always Bitcoin; every other plan cycles
-  // through a curated list of real, distinct coins for visual variety.
-  coin: index === TRADE_AMOUNTS.length - 1 ? "BTC" : PLAN_COIN_CYCLE[index % PLAN_COIN_CYCLE.length],
+  icon: PLAN_ICONS[index % PLAN_ICONS.length],
+  accent: PLAN_ACCENT_COLORS[index % PLAN_ACCENT_COLORS.length],
+  // Keep coin for any legacy references; UI no longer uses it
+  coin: "USDT",
 }));
 
 export const COINS = [
