@@ -1,16 +1,16 @@
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { ReactNode, useState } from "react";
 import { Image, Platform, Pressable, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { CWAAX } from "@/constants/cwaax";
+import { PHANX } from "@/constants/phanx";
 import { NetworkIcon } from "@/components/network-icon";
 
 export type IconName = React.ComponentProps<typeof MaterialIcons>["name"];
 
-export function CwaLogo({ compact = false }: { compact?: boolean }) {
+export function PhanLogo({ compact = false }: { compact?: boolean }) {
   return (
     <View style={styles.logoWrap}>
-      <View style={styles.logoBadge}><Text style={styles.logoLetter}>C</Text></View>
-      {!compact && <Text style={styles.logoText}>Cwa<Text style={styles.logoAccent}>AX</Text></Text>}
+      <View style={styles.logoBadge}><Text style={styles.logoLetter}>P</Text></View>
+      {!compact && <Text style={styles.logoText}>Phan<Text style={styles.logoAccent}>-x</Text></Text>}
     </View>
   );
 }
@@ -18,7 +18,7 @@ export function CwaLogo({ compact = false }: { compact?: boolean }) {
 export function IconButton({ icon, onPress, label, tone = "light" }: { icon: IconName; onPress?: () => void; label?: string; tone?: "light" | "green" }) {
   return (
     <Pressable accessibilityLabel={label} onPress={onPress} style={({ pressed }) => [styles.iconButton, tone === "green" && styles.iconButtonGreen, pressed && styles.pressed]}>
-      <MaterialIcons name={icon} size={21} color={tone === "green" ? CWAAX.white : CWAAX.ink} />
+      <MaterialIcons name={icon} size={21} color={tone === "green" ? PHANX.white : PHANX.ink} />
     </Pressable>
   );
 }
@@ -100,7 +100,7 @@ export function CoinMark({ mark, color, size = 42 }: { mark: string; color: stri
   );
 }
 
-export function TrendLine({ color = CWAAX.green }: { color?: string }) {
+export function TrendLine({ color = PHANX.green }: { color?: string }) {
   return <View style={styles.trendLine}>{[18, 11, 15, 7, 12, 4, 8, 2, 6].map((height, index) => <View key={index} style={[styles.trendBar, { height, backgroundColor: color, opacity: 0.35 + index * 0.07 }]} />)}</View>;
 }
 
@@ -147,7 +147,7 @@ export function ConfirmModal({
       <View style={styles.confirmScrim} pointerEvents="auto">
         <View style={styles.confirmCard}>
           <View style={[styles.confirmIconWrap, danger && styles.confirmIconWrapDanger]}>
-            <MaterialIcons name={danger ? "warning-amber" : "help-outline"} size={26} color={danger ? CWAAX.red : CWAAX.green} />
+            <MaterialIcons name={danger ? "warning-amber" : "help-outline"} size={26} color={danger ? PHANX.red : PHANX.green} />
           </View>
           <Text style={styles.confirmTitle}>{title}</Text>
           {!!message && <Text style={styles.confirmMessage}>{message}</Text>}
@@ -173,30 +173,30 @@ export function ConfirmModal({
 
 export const styles = StyleSheet.create({
   logoWrap: { flexDirection: "row", alignItems: "center", gap: 9 },
-  logoBadge: { width: 34, height: 34, borderRadius: 12, backgroundColor: CWAAX.green, alignItems: "center", justifyContent: "center", transform: [{ rotate: "-8deg" }] },
-  logoLetter: { color: CWAAX.white, fontSize: 23, fontWeight: "900", transform: [{ rotate: "8deg" }] },
-  logoText: { color: CWAAX.ink, fontSize: 21, fontWeight: "800", letterSpacing: -0.8 },
-  logoAccent: { color: CWAAX.green },
-  iconButton: { width: 42, height: 42, borderRadius: 14, backgroundColor: CWAAX.surface, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: CWAAX.line },
-  iconButtonGreen: { backgroundColor: CWAAX.green, borderColor: CWAAX.green },
+  logoBadge: { width: 34, height: 34, borderRadius: 12, backgroundColor: PHANX.green, alignItems: "center", justifyContent: "center", transform: [{ rotate: "-8deg" }] },
+  logoLetter: { color: PHANX.white, fontSize: 23, fontWeight: "900", transform: [{ rotate: "8deg" }] },
+  logoText: { color: PHANX.ink, fontSize: 21, fontWeight: "800", letterSpacing: -0.8 },
+  logoAccent: { color: PHANX.green },
+  iconButton: { width: 42, height: 42, borderRadius: 14, backgroundColor: PHANX.surface, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: PHANX.line },
+  iconButtonGreen: { backgroundColor: PHANX.green, borderColor: PHANX.green },
   pressed: { opacity: 0.62, transform: [{ scale: 0.96 }] },
   cardPressed: { opacity: 0.82, transform: [{ scale: 0.99 }] },
-  card: { backgroundColor: CWAAX.white, borderWidth: 1, borderColor: CWAAX.line, borderRadius: 22, padding: 16, shadowColor: "#15231c", shadowOpacity: 0.035, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 1 },
+  card: { backgroundColor: PHANX.white, borderWidth: 1, borderColor: PHANX.line, borderRadius: 22, padding: 16, shadowColor: "#15231c", shadowOpacity: 0.035, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 1 },
   sectionTitle: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 12 },
-  sectionTitleText: { fontSize: 17, fontWeight: "800", color: CWAAX.ink },
-  sectionAction: { fontSize: 13, color: CWAAX.green, fontWeight: "700" },
+  sectionTitleText: { fontSize: 17, fontWeight: "800", color: PHANX.ink },
+  sectionAction: { fontSize: 13, color: PHANX.green, fontWeight: "700" },
   coin: { alignItems: "center", justifyContent: "center" },
-  coinText: { color: CWAAX.white, fontWeight: "900" },
+  coinText: { color: PHANX.white, fontWeight: "900" },
   trendLine: { height: 24, width: 56, flexDirection: "row", alignItems: "flex-end", justifyContent: "space-between" },
   trendBar: { width: 4, borderRadius: 5 },
   pill: { paddingHorizontal: 9, paddingVertical: 5, borderRadius: 8, alignSelf: "flex-start" },
-  successPill: { backgroundColor: CWAAX.greenSoft },
+  successPill: { backgroundColor: PHANX.greenSoft },
   warningPill: { backgroundColor: "#FFF6DF" },
   dangerPill: { backgroundColor: "#FDECEB" },
   pillText: { fontSize: 11, fontWeight: "700" },
-  successText: { color: CWAAX.green },
-  warningText: { color: CWAAX.gold },
-  dangerText: { color: CWAAX.red },
+  successText: { color: PHANX.green },
+  warningText: { color: PHANX.gold },
+  dangerText: { color: PHANX.red },
   confirmOverlay: {
     ...(Platform.OS === "web"
       ? ({ position: "fixed", top: 0, left: 0, right: 0, bottom: 0 } as object)
@@ -205,16 +205,16 @@ export const styles = StyleSheet.create({
     elevation: 24,
   },
   confirmScrim: { flex: 1, backgroundColor: "rgba(16,26,22,0.5)", alignItems: "center", justifyContent: "center", paddingHorizontal: 28 },
-  confirmCard: { width: "100%", maxWidth: 360, backgroundColor: CWAAX.white, borderRadius: 24, paddingHorizontal: 22, paddingTop: 26, paddingBottom: 20, alignItems: "center" },
-  confirmIconWrap: { width: 52, height: 52, borderRadius: 18, backgroundColor: CWAAX.greenSoft, alignItems: "center", justifyContent: "center", marginBottom: 16 },
+  confirmCard: { width: "100%", maxWidth: 360, backgroundColor: PHANX.white, borderRadius: 24, paddingHorizontal: 22, paddingTop: 26, paddingBottom: 20, alignItems: "center" },
+  confirmIconWrap: { width: 52, height: 52, borderRadius: 18, backgroundColor: PHANX.greenSoft, alignItems: "center", justifyContent: "center", marginBottom: 16 },
   confirmIconWrapDanger: { backgroundColor: "#FDECEB" },
-  confirmTitle: { color: CWAAX.ink, fontSize: 17, fontWeight: "900", textAlign: "center" },
-  confirmMessage: { color: CWAAX.muted, fontSize: 12.5, lineHeight: 19, textAlign: "center", marginTop: 10 },
+  confirmTitle: { color: PHANX.ink, fontSize: 17, fontWeight: "900", textAlign: "center" },
+  confirmMessage: { color: PHANX.muted, fontSize: 12.5, lineHeight: 19, textAlign: "center", marginTop: 10 },
   confirmActions: { flexDirection: "row", gap: 10, marginTop: 22, width: "100%" },
   confirmActionsSingle: { flexDirection: "column" },
-  confirmCancelBtn: { flex: 1, height: 48, borderRadius: 14, borderWidth: 1, borderColor: CWAAX.line, alignItems: "center", justifyContent: "center" },
-  confirmCancelText: { color: CWAAX.ink, fontSize: 13, fontWeight: "800" },
-  confirmOkBtn: { flex: 1, height: 48, borderRadius: 14, backgroundColor: CWAAX.green, alignItems: "center", justifyContent: "center" },
-  confirmOkBtnDanger: { backgroundColor: CWAAX.red },
-  confirmOkText: { color: CWAAX.white, fontSize: 13, fontWeight: "900" },
+  confirmCancelBtn: { flex: 1, height: 48, borderRadius: 14, borderWidth: 1, borderColor: PHANX.line, alignItems: "center", justifyContent: "center" },
+  confirmCancelText: { color: PHANX.ink, fontSize: 13, fontWeight: "800" },
+  confirmOkBtn: { flex: 1, height: 48, borderRadius: 14, backgroundColor: PHANX.green, alignItems: "center", justifyContent: "center" },
+  confirmOkBtnDanger: { backgroundColor: PHANX.red },
+  confirmOkText: { color: PHANX.white, fontSize: 13, fontWeight: "900" },
 });
