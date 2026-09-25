@@ -59,8 +59,7 @@ export default function NetworkSelectScreen() {
             </View>
 
             <View style={styles.feeCol}>
-              <Text style={styles.feeUsd}>{item.internal ? "مجاني" : `$${item.feeUsd.toFixed(2)}`}</Text>
-              {!item.internal && <Text style={styles.feeToken}>{item.feeToken}</Text>}
+              <Text style={styles.feeUsd}>بدون رسوم</Text>
             </View>
           </Pressable>
         )}
