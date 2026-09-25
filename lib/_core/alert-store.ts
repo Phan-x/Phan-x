@@ -1,6 +1,6 @@
 /**
  * Global queue for the app's styled alert/confirm dialogs (see
- * components/alert-host.tsx + components/cwaax-ui.tsx's ConfirmModal).
+ * components/alert-host.tsx + components/phanx-ui.tsx's ConfirmModal).
  * notify()/confirmAsync() in native-alert.ts push requests here instead
  * of calling window.alert/window.confirm or Alert.alert, so every part
  * of the app gets the same nicely designed card with zero call-site
@@ -36,7 +36,7 @@ type AlertStoreState = {
   nextId: number;
 };
 
-const KEY = "__cwaaxAlertStore";
+const KEY = "__phanxAlertStore";
 
 function getStore(): AlertStoreState {
   const g = globalThis as unknown as Record<string, AlertStoreState>;
