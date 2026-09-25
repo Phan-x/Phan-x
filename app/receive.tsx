@@ -76,7 +76,7 @@ export default function ReceiveScreen() {
   const handleShare = async () => {
     if (!address) return;
 
-    const shareText = `عنواني لاستقبال USDT على شبكة \( {network.name}:\n \){address}`;
+    const shareText = `عنواني لاستقبال USDT على شبكة ${network.name}:\n${address}`;
 
     if (typeof navigator === "undefined" || !("share" in navigator)) {
       copyAddress();
