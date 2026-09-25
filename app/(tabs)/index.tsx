@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { ScreenContainer } from "@/components/screen-container";
-import { Card, PhanLogo, IconButton, SectionTitle } from "@/components/phanx-ui";
+import { Card, PhanLogo, IconButton } from "@/components/phanx-ui";
 import { PHANX, quickActions } from "@/constants/phanx";
 import { formatAmount } from "@/constants/currencies";
 import type { CurrencyCode } from "@/lib/_core/preferences";
@@ -14,9 +14,6 @@ import { useLiveMarkets } from "@/hooks/use-live-markets";
 import { useFocusEffect } from "expo-router";
 import { useCallback } from "react";
 
-const HIGHLIGHTS = [
-  { title: "حماية متقدمة", sub: "تشفير كامل ومصادقة ثنائية لحسابك", icon: "verified-user" as const, tint: "#3B6EF5" },
-];
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -87,28 +84,14 @@ export default function HomeScreen() {
           ))}
         </View>
 
-        <SectionTitle title="ابدأ مع Phan-x" action="عرض الكل" onAction={() => router.push("/menu")} />
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.highlightScroll} contentContainerStyle={styles.highlightRow}>
-          {HIGHLIGHTS.map((h) => (
-            <View key={h.title} style={styles.highlightCard}>
-              <View style={[styles.highlightIcon, { backgroundColor: h.tint }]}><MaterialIcons name={h.icon} size={18} color={PHANX.white}/></View>
-              <Text style={styles.highlightTitle}>{h.title}</Text>
-              <Text style={styles.highlightSub}>{h.sub}</Text>
-            </View>
-          ))}
-          <Pressable onPress={() => router.push("/receive")} style={styles.highlightCard}>
-            <View style={[styles.highlightIcon, { backgroundColor: PHANX.greenSoft }]}><MaterialIcons name="call-received" size={18} color={PHANX.green}/></View>
-            <Text style={styles.highlightTitle}>استقبل عملة</Text>
-            <Text style={styles.highlightSub}>أضف أول أصل لمحفظتك</Text>
-          </Pressable>
+        <View style={styles.highlightRowSingle}>
           <Pressable onPress={() => router.push("/trade")} style={styles.highlightCard}>
             <View style={[styles.highlightIcon, { backgroundColor: "#FFF3DD" }]}><MaterialIcons name="swap-horizontal-circle" size={18} color={PHANX.gold}/></View>
             <Text style={styles.highlightTitle}>جرّب التبديل</Text>
             <Text style={styles.highlightSub}>بدّل أصولك بسهولة</Text>
           </Pressable>
-        </ScrollView>
+        </View>
 
-        <SectionTitle title="الأسواق" action="كل الأسواق" onAction={() => router.push("/trade")} />
         <Card style={styles.marketCard}>
           {markets.loading ? (
             <Text style={styles.marketLoading}>جاري تحميل الأسعار...</Text>
@@ -179,6 +162,7 @@ const styles = StyleSheet.create({
   promoSubtitle: { color: PHANX.muted, fontSize: 11, marginTop: 4, textAlign: "right" },
 
   highlightScroll: { marginBottom: 26 },
+  highlightRowSingle: { marginBottom: 22 },
   highlightRow: { gap: 12, paddingRight: 2 },
   highlightCard: { width: 148, borderRadius: 18, padding: 15, backgroundColor: PHANX.white, borderWidth: 1, borderColor: PHANX.line, justifyContent: "space-between", minHeight: 108 },
   highlightIcon: { width: 32, height: 32, borderRadius: 10, alignItems: "center", justifyContent: "center", marginBottom: 18 },
