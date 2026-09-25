@@ -23,7 +23,7 @@ export type NetworkOption = {
 const TW = "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains";
 
 export const NETWORKS: NetworkOption[] = [
-  { code: "internal", name: "خارج السلسلة", chain: "إلى حساب CwaAX آخر", feeUsd: 0, feeToken: "مجاني", color: "#22C55E", internal: true },
+  { code: "internal", name: "خارج السلسلة", chain: "إلى حساب Phan-x آخر", feeUsd: 0, feeToken: "مجاني", color: "#22C55E", internal: true },
   { code: "TRC20", name: "TRC20", chain: "Tron", feeUsd: 2.63, feeToken: "2.63188299 USDT", color: "#FF0028", logo: `${TW}/tron/info/logo.png` },
   { code: "ERC20", name: "ERC20", chain: "Ethereum", feeUsd: 0.02, feeToken: "0.024535 USDT", color: "#627EEA", logo: `${TW}/ethereum/info/logo.png` },
   { code: "OPTIMISM", name: "OPTIMISM", chain: "Optimism", feeUsd: 0.06, feeToken: "0.000024 ETH", color: "#FF0420", logo: `${TW}/optimism/info/logo.png` },
