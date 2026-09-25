@@ -7,7 +7,7 @@
  * JS bundles, silently breaking cross-screen communication like this.
  */
 
-const KEY = "__cwaaxQrStore";
+const KEY = "__phanxQrStore";
 
 function getStore(): { pendingScan: string | null } {
   const g = globalThis as unknown as Record<string, { pendingScan: string | null }>;
