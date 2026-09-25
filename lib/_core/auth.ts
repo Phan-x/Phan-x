@@ -84,7 +84,7 @@ export async function setSessionToken(token: string): Promise<void> {
     // 2) ثم احفظ في التخزين الدائم
     if (Platform.OS === "web") {
       window.localStorage.setItem(SESSION_TOKEN_KEY, token);
-      window.dispatchEvent(new Event("cwaax-auth-changed"));
+      window.dispatchEvent(new Event("phanx-auth-changed"));
     } else {
       await SecureStore.setItemAsync(SESSION_TOKEN_KEY, token);
     }
@@ -111,7 +111,7 @@ export async function removeSessionToken(): Promise<void> {
       window.localStorage.removeItem("app_session_token");
       window.localStorage.removeItem("manus-runtime-user-info");
       window.localStorage.removeItem(USER_INFO_KEY);
-      window.dispatchEvent(new Event("cwaax-auth-changed"));
+      window.dispatchEvent(new Event("phanx-auth-changed"));
     } else {
       await SecureStore.deleteItemAsync(SESSION_TOKEN_KEY);
     }
