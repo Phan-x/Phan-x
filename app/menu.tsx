@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Modal, Pressable, ScrollView, StyleSheet, Switch, Text, View } from "react-native";
+import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { useRouter } from "expo-router";
 import { ScreenContainer } from "@/components/screen-container";
@@ -14,17 +14,9 @@ const common = [
   { label: "الإعدادات", icon: "settings" as const, route: "/settings" },
 ];
 
-const trading = [
-  { label: "العقود الآجلة", icon: "show-chart" as const, route: "/(tabs)/trade" },
-  { label: "معركة السوق", icon: "flash-on" as const, route: "/(tabs)/trade" },
-  { label: "تجارة الاتجاه", icon: "insights" as const, route: "/(tabs)/trade" },
-  { label: "تأكيد الهوية", icon: "badge" as const, route: "/verify-identity" },
-];
-
 export default function MenuScreen() {
   const router = useRouter();
   const { user, logout } = useAuth();
-  const [dark, setDark] = useState(false);
   const [language, setLanguage] = useState("العربية");
   const [languageOpen, setLanguageOpen] = useState(false);
 
@@ -87,65 +79,35 @@ export default function MenuScreen() {
         </Pressable>
 
         <Text style={styles.sectionTitle}>شائع</Text>
-        {common.map((item) => (
+        <Card style={styles.groupCard}>
+          {common.map((item, index) => (
+            <Pressable
+              key={item.label}
+              onPress={() => router.push(item.route as never)}
+              style={({ pressed }) => [styles.menuRow, index < common.length - 1 && styles.menuRowBorder, pressed && styles.pressed]}
+            >
+              <View style={styles.menuIcon}>
+                <MaterialIcons name={item.icon} size={19} color={PHANX.green} />
+              </View>
+              <Text style={styles.menuLabel}>{item.label}</Text>
+              <MaterialIcons name="chevron-left" size={19} color="#A0AAA4" />
+            </Pressable>
+          ))}
+        </Card>
+
+        <Card style={styles.groupCard}>
           <Pressable
-            key={item.label}
-            onPress={() => router.push(item.route as never)}
+            onPress={() => setLanguageOpen(true)}
             style={({ pressed }) => [styles.menuRow, pressed && styles.pressed]}
           >
-            <View style={styles.menuIcon}>
-              <MaterialIcons name={item.icon} size={19} color={PHANX.green} />
+            <View style={[styles.menuIcon, { backgroundColor: "#F2F3F2" }]}>
+              <MaterialIcons name="language" size={19} color={PHANX.ink} />
             </View>
-            <Text style={styles.menuLabel}>{item.label}</Text>
+            <Text style={styles.menuLabel}>اللغة</Text>
+            <Text style={styles.preference}>{language}</Text>
             <MaterialIcons name="chevron-left" size={19} color="#A0AAA4" />
           </Pressable>
-        ))}
-
-        <Text style={styles.sectionTitle}>التجارة</Text>
-        {trading.map((item) => (
-          <Pressable
-            key={item.label}
-            onPress={() => router.push(item.route as never)}
-            style={({ pressed }) => [styles.menuRow, pressed && styles.pressed]}
-          >
-            <View style={[styles.menuIcon, { backgroundColor: item.route === "/verify-identity" ? PHANX.greenSoft : "#F2F0FF" }]}>
-              <MaterialIcons
-                name={item.icon}
-                size={19}
-                color={item.route === "/verify-identity" ? PHANX.green : PHANX.purple}
-              />
-            </View>
-            <Text style={styles.menuLabel}>{item.label}</Text>
-            <MaterialIcons name="chevron-left" size={19} color="#A0AAA4" />
-          </Pressable>
-        ))}
-
-        <Text style={styles.sectionTitle}>تفضيلات التطبيق</Text>
-
-        <View style={styles.menuRow}>
-          <View style={[styles.menuIcon, { backgroundColor: "#F2F3F2" }]}>
-            <MaterialIcons name="dark-mode" size={19} color={PHANX.ink} />
-          </View>
-          <Text style={styles.menuLabel}>الوضع الداكن</Text>
-          <Switch
-            value={dark}
-            onValueChange={setDark}
-            trackColor={{ false: "#DDE4E0", true: "#9BD5B4" }}
-            thumbColor={dark ? PHANX.green : "#FFFFFF"}
-          />
-        </View>
-
-        <Pressable
-          onPress={() => setLanguageOpen(true)}
-          style={({ pressed }) => [styles.menuRow, pressed && styles.pressed]}
-        >
-          <View style={[styles.menuIcon, { backgroundColor: "#F2F3F2" }]}>
-            <MaterialIcons name="language" size={19} color={PHANX.ink} />
-          </View>
-          <Text style={styles.menuLabel}>اللغة</Text>
-          <Text style={styles.preference}>{language}</Text>
-          <MaterialIcons name="chevron-left" size={19} color="#A0AAA4" />
-        </Pressable>
+        </Card>
 
         {isAdmin && (
           <Pressable
@@ -229,10 +191,12 @@ const styles = StyleSheet.create({
   vipCopy: { flex: 1 },
   vipTitle: { color: PHANX.ink, fontWeight: "900", fontSize: 13, textAlign: "right" },
   vipSub: { color: PHANX.muted, fontSize: 10, marginTop: 4, textAlign: "right" },
-  sectionTitle: { color: PHANX.muted, fontWeight: "800", fontSize: 12, textAlign: "right", marginBottom: 7, marginTop: 6 },
-  menuRow: { minHeight: 57, flexDirection: "row", alignItems: "center", gap: 11, borderBottomWidth: 1, borderBottomColor: PHANX.line },
-  menuIcon: { width: 35, height: 35, borderRadius: 12, backgroundColor: PHANX.greenSoft, alignItems: "center", justifyContent: "center" },
-  menuLabel: { flex: 1, color: PHANX.ink, fontSize: 13, fontWeight: "700", textAlign: "right" },
+  sectionTitle: { color: PHANX.muted, fontWeight: "800", fontSize: 12.5, textAlign: "right", marginBottom: 9, marginTop: 8, letterSpacing: 0.2 },
+  groupCard: { padding: 4, marginBottom: 18 },
+  menuRow: { minHeight: 58, flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 10 },
+  menuRowBorder: { borderBottomWidth: 1, borderBottomColor: PHANX.line },
+  menuIcon: { width: 38, height: 38, borderRadius: 13, backgroundColor: PHANX.greenSoft, alignItems: "center", justifyContent: "center" },
+  menuLabel: { flex: 1, color: PHANX.ink, fontSize: 13.5, fontWeight: "700", textAlign: "right" },
   preference: { color: PHANX.muted, fontSize: 11, marginRight: 4 },
   adminLink: { marginTop: 23, borderWidth: 1, borderColor: "#BDE4CB", backgroundColor: "#F4FBF6", borderRadius: 14, padding: 13, flexDirection: "row", justifyContent: "center", alignItems: "center", gap: 7 },
   adminText: { color: PHANX.green, fontSize: 12, fontWeight: "900" },
