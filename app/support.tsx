@@ -13,7 +13,7 @@ import { notify } from "@/lib/_core/native-alert";
  * PHONE_NUMBER in international format with no spaces or "+" (e.g.
  * "9665XXXXXXXX") since that's what wa.me / tel: links require.
  */
-const TELEGRAM_USERNAME = "CwaAXx";
+const TELEGRAM_USERNAME = "Phan_1x";
 
 /*
  * Instant, automated Q&A about the app itself. Each entry has keywords
