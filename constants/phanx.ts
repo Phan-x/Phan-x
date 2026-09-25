@@ -1,6 +1,6 @@
 export const TRADE_DAILY_RATE = 0.035;
 
-export const CWAAX = {
+export const PHANX = {
   green: "#0B8754",
   greenDark: "#076A42",
   greenSoft: "#E8F7EF",
