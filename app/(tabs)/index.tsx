@@ -84,43 +84,6 @@ export default function HomeScreen() {
           ))}
         </View>
 
-        <View style={styles.highlightRowSingle}>
-          <Pressable onPress={() => router.push("/trade")} style={styles.highlightCard}>
-            <View style={[styles.highlightIcon, { backgroundColor: "#FFF3DD" }]}><MaterialIcons name="swap-horizontal-circle" size={18} color={PHANX.gold}/></View>
-            <Text style={styles.highlightTitle}>جرّب التبديل</Text>
-            <Text style={styles.highlightSub}>بدّل أصولك بسهولة</Text>
-          </Pressable>
-        </View>
-
-        <Card style={styles.marketCard}>
-          {markets.loading ? (
-            <Text style={styles.marketLoading}>جاري تحميل الأسعار...</Text>
-          ) : markets.error ? (
-            <Text style={styles.marketLoading}>{markets.error}</Text>
-          ) : !markets.data || markets.data.length === 0 ? (
-            <Text style={styles.marketLoading}>تعذر تحميل الأسعار حالياً، حاول لاحقاً.</Text>
-          ) : (
-            markets.data.map((coin, index) => (
-              <Pressable
-                key={coin.id}
-                onPress={() => router.push("/trade")}
-                style={({ pressed }) => [styles.marketRow, index < markets.data!.length - 1 && styles.marketBorder, pressed && styles.pressed]}
-              >
-                <Image source={{ uri: coin.image }} style={styles.marketIcon} />
-                <View style={styles.marketName}>
-                  <Text style={styles.marketSymbol}>{coin.symbol}/USDT</Text>
-                  <Text style={styles.marketMeta} numberOfLines={1}>{coin.name}</Text>
-                </View>
-                <View style={styles.marketPrice}>
-                  <Text style={styles.priceText}>{formatAmount(coin.price, currency)}</Text>
-                  <Text style={coin.change24h >= 0 ? styles.positive : styles.negative}>
-                    {coin.change24h >= 0 ? "+" : ""}{coin.change24h.toFixed(2)}%
-                  </Text>
-                </View>
-              </Pressable>
-            ))
-          )}
-        </Card>
         <View style={{ height: 24 }} />
       </ScrollView>
       {notice ? <View style={styles.toast}><MaterialIcons name="info-outline" size={18} color={PHANX.white}/><Text style={styles.toastText}>{notice}</Text></View> : null}
