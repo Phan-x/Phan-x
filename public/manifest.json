@@ -1,7 +1,7 @@
 {
-  "name": "CwaAX Wallet",
-  "short_name": "CwaAX",
-  "description": "CwaAX Wallet",
+  "name": "Phan-x Wallet",
+  "short_name": "Phan-x",
+  "description": "Phan-x Wallet",
   "start_url": "/",
   "display": "standalone",
   "orientation": "portrait",
