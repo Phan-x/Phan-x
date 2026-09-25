@@ -1,7 +1,7 @@
 
-## CwaAX production authentication and database
+## Phan-x production authentication and database
 
-CwaAX now uses server-side MySQL persistence for email/password accounts, wallet balances, deposits, withdrawals, transactions and admin authorization. The client does not own balances or approval state.
+Phan-x now uses server-side MySQL persistence for email/password accounts, wallet balances, deposits, withdrawals, transactions and admin authorization. The client does not own balances or approval state.
 
 ### Environment
 
