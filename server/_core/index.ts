@@ -70,7 +70,7 @@ async function startServer() {
       onError({ path, error, req }) {
         console.error("[tRPC] request failed", {
           procedure: path,
-          requestId: req.headers["x-cwaax-request-id"] ?? "unknown",
+          requestId: req.headers["x-phanx-request-id"] ?? "unknown",
           code: error.code,
           message: error.message,
           cause: error.cause instanceof Error ? error.cause.message : String(error.cause ?? ""),
