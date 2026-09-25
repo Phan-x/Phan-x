@@ -17,14 +17,13 @@ import { trpc } from "@/lib/trpc";
 export default function ReceiveScreen() {
   const router = useRouter();
   const [networkCode, setNetworkCode] = useState(getSelectedNetwork());
-  const [mode, setMode] = useState<"offchain" | "onchain">("onchain");
   const [qrUri, setQrUri] = useState<string | null>(null);
   const [showConfirm, setShowConfirm] = useState(false);
   const [sentAmount, setSentAmount] = useState("");
 
   useEffect(() => subscribeNetwork(setNetworkCode), []);
 
-  const network = getNetwork(networkCode === "internal" ? "TRC20" : networkCode);
+  const network = getNetwork(networkCode);
   const address = DEPOSIT_ADDRESSES[network.code];
 
   const createDeposit = trpc.wallet.createDeposit.useMutation({
@@ -119,23 +118,8 @@ export default function ReceiveScreen() {
           <View style={{ width: 42 }} />
         </View>
 
-        <View style={styles.badgeRow}>
-          <View style={styles.freeBadge}>
-            <Text style={styles.freeBadgeText}>بدون رسوم غاز!</Text>
-          </View>
-        </View>
-
-        <View style={styles.tabs}>
-          <Pressable onPress={() => setMode("offchain")} style={[styles.tab, mode === "offchain" && styles.tabActive]}>
-            <Text style={[styles.tabText, mode === "offchain" && styles.tabTextActive]}>Off-chain</Text>
-          </Pressable>
-          <Pressable onPress={() => setMode("onchain")} style={[styles.tab, mode === "onchain" && styles.tabActive]}>
-            <Text style={[styles.tabText, mode === "onchain" && styles.tabTextActive]}>On-chain</Text>
-          </Pressable>
-        </View>
-
-        {/* زر تأكيد الإيداع مباشرة تحت التبويبات وفي المنتصف */}
-        {mode === "onchain" && address ? (
+        {/* زر تأكيد الإيداع مباشرة أعلى الشاشة وفي المنتصف */}
+        {address ? (
           !showConfirm ? (
             <Pressable
               onPress={() => setShowConfirm(true)}
@@ -174,15 +158,7 @@ export default function ReceiveScreen() {
           )
         ) : null}
 
-        {mode === "offchain" ? (
-          <View style={styles.comingSoon}>
-            <MaterialIcons name="hourglass-empty" size={30} color={PHANX.muted} />
-            <Text style={styles.comingSoonText}>
-              التحويل الداخلي بين حسابات Phan-x قيد التطوير ولم يُفعَّل بعد.
-            </Text>
-          </View>
-        ) : (
-          <>
+        <>
             <View style={styles.selectorsRow}>
               <View style={styles.selectorCol}>
                 <Text style={styles.selectorLabel}>استقبال</Text>
@@ -251,7 +227,6 @@ export default function ReceiveScreen() {
               </View>
             ) : null}
           </>
-        )}
       </ScrollView>
     </ScreenContainer>
   );
@@ -261,16 +236,6 @@ const styles = StyleSheet.create({
   content: { paddingTop: 12, paddingBottom: 30 },
   header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 14 },
   title: { color: PHANX.ink, fontSize: 19, fontWeight: "900" },
-  badgeRow: { alignItems: "center", marginBottom: 16 },
-  freeBadge: { backgroundColor: PHANX.greenSoft, borderRadius: 20, paddingHorizontal: 14, paddingVertical: 6 },
-  freeBadgeText: { color: PHANX.green, fontSize: 11, fontWeight: "800" },
-  tabs: { flexDirection: "row", backgroundColor: PHANX.surface, borderRadius: 14, padding: 4, marginBottom: 22 },
-  tab: { flex: 1, alignItems: "center", paddingVertical: 10, borderRadius: 11 },
-  tabActive: { backgroundColor: "#fff" },
-  tabText: { color: PHANX.muted, fontSize: 12, fontWeight: "800" },
-  tabTextActive: { color: PHANX.ink },
-  comingSoon: { alignItems: "center", paddingVertical: 50, gap: 12 },
-  comingSoonText: { color: PHANX.muted, fontSize: 12, textAlign: "center", lineHeight: 19, paddingHorizontal: 20 },
   selectorsRow: { flexDirection: "row", gap: 10, marginBottom: 18 },
   selectorCol: { flex: 1 },
   selectorLabel: { color: PHANX.muted, fontSize: 10, textAlign: "right", marginBottom: 6 },
