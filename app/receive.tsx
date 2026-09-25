@@ -58,7 +58,7 @@ export default function ReceiveScreen() {
   useEffect(() => {
     setQrUri(null);
     if (!address) return;
-    QRCode.toDataURL(address, { margin: 1, width: 400, color: { dark: "#101A16", light: "#00000000" } })
+    QRCode.toDataURL(address, { margin: 1, width: 400, color: { dark: "#101A16", light: "#FFFFFF" } })
       .then(setQrUri)
       .catch(() => setQrUri(null));
   }, [address]);
