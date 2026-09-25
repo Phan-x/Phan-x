@@ -17,7 +17,7 @@ async function readKey(key: string): Promise<string | null> {
 async function writeKey(key: string, value: string): Promise<void> {
   if (Platform.OS === "web") {
     window.localStorage.setItem(key, value);
-    window.dispatchEvent(new Event("cwaax-prefs-changed"));
+    window.dispatchEvent(new Event("phanx-prefs-changed"));
     return;
   }
   await AsyncStorage.setItem(key, value);
