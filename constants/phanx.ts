@@ -54,7 +54,5 @@ export const TRANSACTIONS = [
 export const quickActions = [
   { label: "دفع", icon: "call-made" as const, route: "/send" },
   { label: "استقبال", icon: "call-received" as const, route: "/receive" },
-  { label: "شراء / بيع", icon: "swap-vertical-circle" as const, route: "/trade" },
-  { label: "تبديل", icon: "compare-arrows" as const, route: "/trade" },
   { label: "أكثر", icon: "more-horiz" as const, route: "/menu" },
 ];
