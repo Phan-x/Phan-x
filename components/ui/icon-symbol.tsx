@@ -19,6 +19,7 @@ const MAPPING = {
   "chart.bar.fill": "show-chart",
   "message.fill": "chat-bubble-outline",
   "sparkles": "auto-awesome",
+  "gift.fill": "card-giftcard",
   "person.crop.circle": "account-circle",
   "paperplane.fill": "send",
   "chevron.left.forwardslash.chevron.right": "code",
