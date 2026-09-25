@@ -15,8 +15,6 @@ import { useFocusEffect } from "expo-router";
 import { useCallback } from "react";
 
 const HIGHLIGHTS = [
-  { title: "تحويل فوري", sub: "أرسل واستقبل بدون رسوم بين المستخدمين", icon: "swap-horiz" as const, tint: "#D19A32" },
-  { title: "تداول لحظي", sub: "أسعار مباشرة وتنفيذ سريع للصفقات", icon: "show-chart" as const, tint: PHANX.green },
   { title: "حماية متقدمة", sub: "تشفير كامل ومصادقة ثنائية لحسابك", icon: "verified-user" as const, tint: "#3B6EF5" },
 ];
 
@@ -60,7 +58,6 @@ export default function HomeScreen() {
         </View>
 
         <View style={styles.greetingRow}>
-          <View><Text style={styles.welcome}>إليك نظرة سريعة على محفظتك</Text></View>
           <Pressable onPress={() => router.push("/transactions")} style={({ pressed }) => [styles.history, pressed && styles.pressed]}><MaterialIcons name="history" size={18} color={PHANX.green}/><Text style={styles.historyText}>السجل</Text></Pressable>
         </View>
 
@@ -89,15 +86,6 @@ export default function HomeScreen() {
             </Pressable>
           ))}
         </View>
-
-        <Pressable onPress={() => router.push("/settings")} style={({ pressed }) => [styles.promo, pressed && styles.pressed]}>
-          <View style={styles.promoIcon}><MaterialIcons name="bolt" size={22} color={PHANX.white}/></View>
-          <View style={styles.promoCopy}>
-            <Text style={styles.promoTitle}>أكمل إعداد محفظتك</Text>
-            <Text style={styles.promoSubtitle}>فعّل المصادقة الثنائية لتحصل على حماية أعلى</Text>
-          </View>
-          <MaterialIcons name="chevron-left" size={22} color={PHANX.muted}/>
-        </Pressable>
 
         <SectionTitle title="ابدأ مع Phan-x" action="عرض الكل" onAction={() => router.push("/menu")} />
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.highlightScroll} contentContainerStyle={styles.highlightRow}>
@@ -161,7 +149,7 @@ const styles = StyleSheet.create({
   content: { paddingTop: 12, paddingBottom: 24 },
   header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 22 },
   headerActions: { flexDirection: "row", gap: 8 },
-  greetingRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 14 },
+  greetingRow: { flexDirection: "row", justifyContent: "flex-start", alignItems: "flex-end", marginBottom: 14 },
   eyebrow: { color: PHANX.muted, fontSize: 13, marginBottom: 4, textAlign: "right" },
   welcome: { color: PHANX.ink, fontSize: 18, fontWeight: "800", textAlign: "right" },
   history: { flexDirection: "row", alignItems: "center", gap: 5, padding: 8 },
@@ -178,8 +166,8 @@ const styles = StyleSheet.create({
   assetGlowOne: { position: "absolute", width: 180, height: 180, borderRadius: 100, backgroundColor: "rgba(255,255,255,.06)", right: -74, top: -100 },
   assetGlowTwo: { position: "absolute", width: 110, height: 110, borderRadius: 80, backgroundColor: "rgba(255,255,255,.05)", right: 44, bottom: -70 },
 
-  quickGrid: { flexDirection: "row", justifyContent: "space-between", marginBottom: 22 },
-  quickItem: { alignItems: "center", width: "19%" },
+  quickGrid: { flexDirection: "row", justifyContent: "space-evenly", marginBottom: 22 },
+  quickItem: { alignItems: "center", width: 78 },
   quickIcon: { width: 46, height: 46, borderRadius: 16, backgroundColor: PHANX.white, borderWidth: 1, borderColor: PHANX.line, justifyContent: "center", alignItems: "center", marginBottom: 7 },
   quickIconPrimary: { backgroundColor: PHANX.green, borderColor: PHANX.green, shadowColor: PHANX.green, shadowOpacity: 0.35, shadowRadius: 8, shadowOffset: { width: 0, height: 4 }, elevation: 3 },
   quickLabel: { color: PHANX.ink, fontSize: 11, fontWeight: "700", textAlign: "center" },
