@@ -751,7 +751,8 @@ export async function adminAdjustBalance(params: {
    TRADE CONTRACTS
 ========================= */
 
-const TRADE_DAILY_RATE_DB = TRADE_DAILY_RATE.toFixed(6);
+// Daily profit rate: 25% (0.25) — kept in sync with constants/phanx.ts
+const TRADE_DAILY_RATE_DB = TRADE_DAILY_RATE.toFixed(6); // "0.250000"
 const TRADE_DURATION_DAYS = 365;
 
 /*
@@ -803,6 +804,7 @@ export async function startTradeContract(params: {
   // this is what keeps every user's countdown identical.
   const nextPayoutAt = nextGlobalPayoutAnchor(now);
   const endsAt = new Date(now.getTime() + TRADE_DURATION_DAYS * 24 * 60 * 60 * 1000);
+  // Immediate activation profit = principal × 25%
   const immediateProfit = Number((amount * TRADE_DAILY_RATE).toFixed(8));
 
   return db.transaction(async (tx) => {
@@ -921,7 +923,7 @@ export async function processDueTradePayouts(now = new Date()) {
   const nowIso = now.toISOString();
   let paid = 0;
 
-  // Keep existing active contracts aligned with the advertised 3.5% daily rate.
+  // Keep existing active contracts aligned with the advertised 25% daily rate.
   // This changes future payouts only; it does not create retroactive credits.
   await db.update(tradeContracts)
     .set({ dailyRate: TRADE_DAILY_RATE_DB })
