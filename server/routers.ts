@@ -66,7 +66,7 @@ export const appRouter = router({
       if (!user) badRequest("تعذر إنشاء الحساب");
 
       const token = await sdk.signSession(
-        { openId: user.openId, appId: ENV.appId, name: user.name || user.username || "CwaAX" },
+        { openId: user.openId, appId: ENV.appId, name: user.name || user.username || "Phan-x" },
         { expiresInMs: ONE_YEAR_MS },
       );
       return {
@@ -92,7 +92,7 @@ export const appRouter = router({
       }
       await db.updateUserLastSignedIn(user.id);
       const token = await sdk.signSession(
-        { openId: user.openId, appId: ENV.appId, name: user.name || user.username || "CwaAX" },
+        { openId: user.openId, appId: ENV.appId, name: user.name || user.username || "Phan-x" },
         { expiresInMs: ONE_YEAR_MS },
       );
       return {
