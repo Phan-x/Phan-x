@@ -31,7 +31,7 @@ const dictionaries = {
     terms: "الشروط والسياسات",
     termsSub: "آخر تحديث: سبتمبر 2026",
     back: "رجوع",
-    version: "CwaAX Wallet · الإصدار 1.0.0",
+    version: "Phan-x Wallet · الإصدار 1.0.0",
     chooseCurrency: "اختر العملة",
     chooseLanguage: "اختر اللغة",
     arabic: "العربية",
@@ -56,7 +56,7 @@ const dictionaries = {
     terms: "Terms & Policies",
     termsSub: "Last updated: September 2026",
     back: "Back",
-    version: "CwaAX Wallet · v1.0.0",
+    version: "Phan-x Wallet · v1.0.0",
     chooseCurrency: "Choose currency",
     chooseLanguage: "Choose language",
     arabic: "العربية",
@@ -86,8 +86,8 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
 
     if (Platform.OS === "web") {
       const onChange = () => Preferences.getLocale().then(setLocaleState);
-      window.addEventListener("cwaax-prefs-changed", onChange);
-      return () => window.removeEventListener("cwaax-prefs-changed", onChange);
+      window.addEventListener("phanx-prefs-changed", onChange);
+      return () => window.removeEventListener("phanx-prefs-changed", onChange);
     }
   }, []);
 
