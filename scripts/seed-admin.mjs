@@ -3,7 +3,7 @@ import crypto from "node:crypto";
 import postgres from "postgres";
 const email=(process.env.ADMIN_EMAIL||"").trim().toLowerCase();
 const username=(process.env.ADMIN_USERNAME||"admin").trim();
-const name=(process.env.ADMIN_NAME||"CwaAX Admin").trim();
+const name=(process.env.ADMIN_NAME||"Phan-x Admin").trim();
 const password=process.env.ADMIN_PASSWORD||"";
 if(!email||!password) throw new Error("Set ADMIN_EMAIL and ADMIN_PASSWORD before running db:seed-admin");
 const salt=crypto.randomBytes(16).toString("hex");
