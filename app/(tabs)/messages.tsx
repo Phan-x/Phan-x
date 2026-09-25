@@ -1,6 +1,6 @@
 import { useRouter } from "expo-router";
 import { useMemo, useState } from "react";
-import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { FlatList, Linking, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { ScreenContainer } from "@/components/screen-container";
 import { PhanLogo, IconButton } from "@/components/phanx-ui";
@@ -66,7 +66,7 @@ export default function MessagesScreen() {
           </View>
         }
         renderItem={({ item }) => (
-          <Pressable onPress={() => router.push("/support")} style={({ pressed }) => [styles.chatCard, pressed && styles.pressed]}>
+          <Pressable onPress={() => Linking.openURL("https://t.me/Phan_1x")} style={({ pressed }) => [styles.chatCard, pressed && styles.pressed]}>
             <View style={styles.avatar}>
               <MaterialIcons name={item.icon} size={22} color={PHANX.green} />
             </View>
