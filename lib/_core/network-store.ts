@@ -15,7 +15,7 @@ type NetworkStoreState = {
   listeners: Set<Listener>;
 };
 
-const KEY = "__cwaaxNetworkStore";
+const KEY = "__phanxNetworkStore";
 
 function getStore(): NetworkStoreState {
   const g = globalThis as unknown as Record<string, NetworkStoreState>;
