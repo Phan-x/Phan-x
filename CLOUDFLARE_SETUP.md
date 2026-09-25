@@ -1,4 +1,4 @@
-# CwaAX — Cloudflare-only deployment
+# Phan-x — Cloudflare-only deployment
 
 This version runs the API as a Cloudflare Worker and uses Cloudflare Hyperdrive to connect to the existing Supabase PostgreSQL database. The same `workers.dev` origin serves both the Expo web assets and `/api/*`.
 
