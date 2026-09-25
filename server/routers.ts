@@ -34,17 +34,48 @@ export const appRouter = router({
         lastSignedIn: user.lastSignedIn,
       };
     }),
-    register: publicProcedure.input(z.object({ name: z.string().trim().min(2).max(120), username: z.string().trim().min(3).max(64).regex(/^[a-zA-Z0-9_]+$/), email: z.string().trim().email().max(320), password: z.string().min(8).max(128), referralCode: z.string().trim().max(32).optional(), phone: z.string().trim().max(32).optional() })).mutation(async ({ ctx, input }) => {
+    register: publicProcedure.input(z.object({
+      name: z.string().trim().min(2).max(120).optional(),
+      username: z.string().trim().min(3).max(64).regex(/^[a-zA-Z0-9_]+$/).optional(),
+      email: z.string().trim().email().max(320),
+      password: z.string().min(8).max(128),
+      referralCode: z.string().trim().max(32).optional(),
+      phone: z.string().trim().max(32).optional(),
+    })).mutation(async ({ ctx, input }) => {
       const email = input.email.toLowerCase();
       if (await db.getUserByEmail(email)) badRequest("البريد الإلكتروني مستخدم بالفعل");
-      if (await db.getUserByUsername(input.username)) badRequest("اسم المستخدم مستخدم بالفعل");
       if (input.phone && (await db.getUserByPhone(input.phone))) badRequest("رقم الهاتف مستخدم بالفعل");
+
+      // Generate username from email if not provided (username field removed from UI)
+      const baseFromEmail = email.split("@")[0]
+        .replace(/[^a-zA-Z0-9_]/g, "_")
+        .replace(/_+/g, "_")
+        .replace(/^_|_$/g, "")
+        .slice(0, 24) || "user";
+      let username = (input.username || baseFromEmail).toLowerCase();
+      if (username.length < 3) username = `${username}${Math.floor(100 + Math.random() * 900)}`;
+
+      // Ensure uniqueness by appending digits if needed
+      if (await db.getUserByUsername(username)) {
+        for (let i = 0; i < 20; i++) {
+          const candidate = `${username.slice(0, 20)}${Math.floor(100 + Math.random() * 900)}`;
+          if (!(await db.getUserByUsername(candidate))) {
+            username = candidate;
+            break;
+          }
+        }
+        if (await db.getUserByUsername(username)) {
+          badRequest("تعذر إنشاء الحساب، حاول مرة أخرى");
+        }
+      }
+
+      const displayName = (input.name || username).trim();
 
       let user;
       try {
         user = await db.createLocalUser({
-          name: input.name,
-          username: input.username,
+          name: displayName,
+          username,
           email,
           passwordHash: hashPassword(input.password),
           referralCode: input.referralCode,
@@ -55,10 +86,10 @@ export const appRouter = router({
         // Postgres unique_violation
         if (msg.includes("unique") || msg.includes("duplicate") || err?.code === "23505") {
           if (msg.toLowerCase().includes("email")) badRequest("البريد الإلكتروني مستخدم بالفعل");
-          if (msg.toLowerCase().includes("username")) badRequest("اسم المستخدم مستخدم بالفعل");
+          if (msg.toLowerCase().includes("username")) badRequest("تعذر إنشاء الحساب، حاول مرة أخرى");
           if (msg.toLowerCase().includes("phone")) badRequest("رقم الهاتف مستخدم بالفعل");
-          if (msg.toLowerCase().includes("referral")) badRequest("رمز الإحالة مستخدم بالفعل، جرّب اسم مستخدم آخر");
-          badRequest("البيانات مستخدمة بالفعل، تحقق من البريد أو اسم المستخدم أو الهاتف");
+          if (msg.toLowerCase().includes("referral")) badRequest("رمز الإحالة مستخدم بالفعل، جرّب مرة أخرى");
+          badRequest("البيانات مستخدمة بالفعل، تحقق من البريد أو الهاتف");
         }
         throw err;
       }
