@@ -177,8 +177,12 @@ export const appRouter = router({
     users: adminProcedure.input(z.object({ search: z.string().max(320).optional() }).optional()).query(({ input }) => db.listUsers(input?.search)),
     userDetail: adminProcedure.input(z.object({ userId: z.number().int().positive() })).query(({ input }) => db.getAdminUserDetail(input.userId)),
     referralsAtLevel: adminProcedure.input(z.object({ userId: z.number().int().positive(), level: z.union([z.literal(1), z.literal(2), z.literal(3)]) })).query(({ input }) => db.getReferralsAtLevel(input.userId, input.level)),
-    deposits: adminProcedure.query(() => db.listDepositRequests()),
-    withdrawals: adminProcedure.query(() => db.listWithdrawalRequests()),
+    deposits: adminProcedure
+      .input(z.object({ pendingOnly: z.boolean().optional() }).optional())
+      .query(({ input }) => db.listDepositRequests({ pendingOnly: input?.pendingOnly })),
+    withdrawals: adminProcedure
+      .input(z.object({ pendingOnly: z.boolean().optional() }).optional())
+      .query(({ input }) => db.listWithdrawalRequests({ pendingOnly: input?.pendingOnly })),
     approveDeposit: adminProcedure.input(z.object({ requestId: z.number().int().positive() })).mutation(({ ctx, input }) => db.approveDeposit(input.requestId, ctx.user.id)),
     rejectDeposit: adminProcedure.input(z.object({ requestId: z.number().int().positive() })).mutation(({ ctx, input }) => db.rejectDeposit(input.requestId, ctx.user.id)),
     approveWithdrawal: adminProcedure.input(z.object({ requestId: z.number().int().positive() })).mutation(({ ctx, input }) => db.approveWithdrawal(input.requestId, ctx.user.id)),
