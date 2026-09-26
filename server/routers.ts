@@ -161,7 +161,15 @@ export const appRouter = router({
     balances: protectedProcedure.query(({ ctx }) => db.getWalletBalances(ctx.user.id)),
     transactions: protectedProcedure.query(({ ctx }) => db.listTransactions(ctx.user.id)),
     createDeposit: protectedProcedure.input(requestInput.extend({ paymentMethod: z.string().max(64).optional() })).mutation(({ ctx, input }) => db.createDepositRequest({ userId: ctx.user.id, ...input })),
-    createWithdrawal: protectedProcedure.input(requestInput.extend({ address: z.string().min(20).max(500) })).mutation(({ ctx, input }) => db.createWithdrawalRequest({ userId: ctx.user.id, ...input })),
+    createWithdrawal: protectedProcedure.input(requestInput.extend({ address: z.string().min(20).max(500) })).mutation(({ ctx, input }) => {
+      if (ctx.user.withdrawalLocked) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "السحب من حسابك مقفل مؤقتاً، تواصل مع الدعم." });
+      }
+      if (ctx.user.isBanned) {
+        throw new TRPCError({ code: "FORBIDDEN", message: ctx.user.bannedReason ? `تم حظر هذا الحساب: ${ctx.user.bannedReason}` : "تم حظر هذا الحساب. تواصل مع الدعم." });
+      }
+      return db.createWithdrawalRequest({ userId: ctx.user.id, ...input });
+    }),
     referralStats: protectedProcedure.query(({ ctx }) => db.getReferralStats(ctx.user.id)),
   }),
   admin: router({
@@ -177,6 +185,8 @@ export const appRouter = router({
     rejectWithdrawal: adminProcedure.input(z.object({ requestId: z.number().int().positive() })).mutation(({ ctx, input }) => db.rejectWithdrawal(input.requestId, ctx.user.id)),
     banUser: adminProcedure.input(z.object({ userId: z.number().int().positive(), reason: z.string().max(300).optional() })).mutation(({ input }) => db.banUser(input.userId, input.reason)),
     unbanUser: adminProcedure.input(z.object({ userId: z.number().int().positive() })).mutation(({ input }) => db.unbanUser(input.userId)),
+    lockWithdrawal: adminProcedure.input(z.object({ userId: z.number().int().positive() })).mutation(({ input }) => db.lockWithdrawal(input.userId)),
+    unlockWithdrawal: adminProcedure.input(z.object({ userId: z.number().int().positive() })).mutation(({ input }) => db.unlockWithdrawal(input.userId)),
     setUserPassword: adminProcedure.input(z.object({ userId: z.number().int().positive(), newPassword: z.string().min(8).max(128) })).mutation(async ({ input }) => { await db.updateUserPassword(input.userId, hashPassword(input.newPassword)); return { success: true } as const; }),
     adjustBalance: adminProcedure.input(z.object({ userId: z.number().int().positive(), currency: z.string().min(2).max(16), amount: z.number().positive().finite(), direction: z.enum(["credit", "debit"]), note: z.string().max(300).optional() })).mutation(({ ctx, input }) => db.adminAdjustBalance({ ...input, adminId: ctx.user.id })),
     sendNotification: adminProcedure.input(z.object({ userId: z.number().int().positive().nullable(), title: z.string().trim().min(1).max(160), message: z.string().trim().min(1).max(2000) })).mutation(({ ctx, input }) => db.sendNotification({ ...input, sentBy: ctx.user.id })),
