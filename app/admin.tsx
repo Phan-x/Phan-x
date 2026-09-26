@@ -49,74 +49,134 @@ export default function AdminScreen() {
   const approveDeposit = trpc.admin.approveDeposit.useMutation({
     onMutate: async ({ requestId }) => {
       await utils.admin.deposits.cancel();
+      await utils.admin.stats.cancel();
       const prev = utils.admin.deposits.getData();
+      const prevStats = utils.admin.stats.getData();
       utils.admin.deposits.setData(undefined, (old: any) =>
-        (old || []).filter((x: any) => x.request.id !== requestId)
+        (old || []).map((x: any) =>
+          x.request.id === requestId
+            ? { ...x, request: { ...x.request, status: "approved" } }
+            : x
+        )
       );
-      return { prev };
+      if (prevStats) {
+        utils.admin.stats.setData(undefined, {
+          ...prevStats,
+          pendingDeposits: Math.max(0, Number(prevStats.pendingDeposits ?? 0) - 1),
+        });
+      }
+      return { prev, prevStats };
     },
     onError: (_e, _v, ctx: any) => {
       if (ctx?.prev) utils.admin.deposits.setData(undefined, ctx.prev);
+      if (ctx?.prevStats) utils.admin.stats.setData(undefined, ctx.prevStats);
     },
     onSettled: async () => {
-      await utils.admin.deposits.invalidate();
-      utils.admin.stats.invalidate();
-      utils.wallet.balances.invalidate();
+      await Promise.all([
+        utils.admin.deposits.invalidate(),
+        utils.admin.stats.invalidate(),
+        utils.wallet.balances.invalidate(),
+      ]);
     },
   });
 
   const rejectDeposit = trpc.admin.rejectDeposit.useMutation({
     onMutate: async ({ requestId }) => {
       await utils.admin.deposits.cancel();
+      await utils.admin.stats.cancel();
       const prev = utils.admin.deposits.getData();
+      const prevStats = utils.admin.stats.getData();
       utils.admin.deposits.setData(undefined, (old: any) =>
-        (old || []).filter((x: any) => x.request.id !== requestId)
+        (old || []).map((x: any) =>
+          x.request.id === requestId
+            ? { ...x, request: { ...x.request, status: "rejected" } }
+            : x
+        )
       );
-      return { prev };
+      if (prevStats) {
+        utils.admin.stats.setData(undefined, {
+          ...prevStats,
+          pendingDeposits: Math.max(0, Number(prevStats.pendingDeposits ?? 0) - 1),
+        });
+      }
+      return { prev, prevStats };
     },
     onError: (_e, _v, ctx: any) => {
       if (ctx?.prev) utils.admin.deposits.setData(undefined, ctx.prev);
+      if (ctx?.prevStats) utils.admin.stats.setData(undefined, ctx.prevStats);
     },
     onSettled: async () => {
-      await utils.admin.deposits.invalidate();
-      utils.admin.stats.invalidate();
+      await Promise.all([
+        utils.admin.deposits.invalidate(),
+        utils.admin.stats.invalidate(),
+      ]);
     },
   });
 
   const approveWithdrawal = trpc.admin.approveWithdrawal.useMutation({
     onMutate: async ({ requestId }) => {
       await utils.admin.withdrawals.cancel();
+      await utils.admin.stats.cancel();
       const prev = utils.admin.withdrawals.getData();
+      const prevStats = utils.admin.stats.getData();
       utils.admin.withdrawals.setData(undefined, (old: any) =>
-        (old || []).filter((x: any) => x.request.id !== requestId)
+        (old || []).map((x: any) =>
+          x.request.id === requestId
+            ? { ...x, request: { ...x.request, status: "approved" } }
+            : x
+        )
       );
-      return { prev };
+      if (prevStats) {
+        utils.admin.stats.setData(undefined, {
+          ...prevStats,
+          pendingWithdrawals: Math.max(0, Number(prevStats.pendingWithdrawals ?? 0) - 1),
+        });
+      }
+      return { prev, prevStats };
     },
     onError: (_e, _v, ctx: any) => {
       if (ctx?.prev) utils.admin.withdrawals.setData(undefined, ctx.prev);
+      if (ctx?.prevStats) utils.admin.stats.setData(undefined, ctx.prevStats);
     },
     onSettled: async () => {
-      await utils.admin.withdrawals.invalidate();
-      utils.admin.stats.invalidate();
-      utils.wallet.balances.invalidate();
+      await Promise.all([
+        utils.admin.withdrawals.invalidate(),
+        utils.admin.stats.invalidate(),
+        utils.wallet.balances.invalidate(),
+      ]);
     },
   });
 
   const rejectWithdrawal = trpc.admin.rejectWithdrawal.useMutation({
     onMutate: async ({ requestId }) => {
       await utils.admin.withdrawals.cancel();
+      await utils.admin.stats.cancel();
       const prev = utils.admin.withdrawals.getData();
+      const prevStats = utils.admin.stats.getData();
       utils.admin.withdrawals.setData(undefined, (old: any) =>
-        (old || []).filter((x: any) => x.request.id !== requestId)
+        (old || []).map((x: any) =>
+          x.request.id === requestId
+            ? { ...x, request: { ...x.request, status: "rejected" } }
+            : x
+        )
       );
-      return { prev };
+      if (prevStats) {
+        utils.admin.stats.setData(undefined, {
+          ...prevStats,
+          pendingWithdrawals: Math.max(0, Number(prevStats.pendingWithdrawals ?? 0) - 1),
+        });
+      }
+      return { prev, prevStats };
     },
     onError: (_e, _v, ctx: any) => {
       if (ctx?.prev) utils.admin.withdrawals.setData(undefined, ctx.prev);
+      if (ctx?.prevStats) utils.admin.stats.setData(undefined, ctx.prevStats);
     },
     onSettled: async () => {
-      await utils.admin.withdrawals.invalidate();
-      utils.admin.stats.invalidate();
+      await Promise.all([
+        utils.admin.withdrawals.invalidate(),
+        utils.admin.stats.invalidate(),
+      ]);
     },
   });
 
@@ -129,25 +189,28 @@ export default function AdminScreen() {
   // ====== Queries (auto-refresh, paused while mutating) ======
   const stats = trpc.admin.stats.useQuery(undefined, {
     enabled: isAdmin,
-    refetchInterval: isMutating ? false : 15000,
+    refetchInterval: isMutating ? false : 5000,
     refetchOnWindowFocus: true,
+    staleTime: 0,
   });
 
   const users = trpc.admin.users.useQuery(
     { search: query || undefined },
-    { enabled: isAdmin, refetchInterval: isMutating ? false : 20000, refetchOnWindowFocus: true }
+    { enabled: isAdmin, refetchInterval: isMutating ? false : 10000, refetchOnWindowFocus: true, staleTime: 0 }
   );
 
   const deposits = trpc.admin.deposits.useQuery(undefined, {
     enabled: isAdmin,
-    refetchInterval: isMutating ? false : 10000,
+    refetchInterval: isMutating ? false : 3000,
     refetchOnWindowFocus: true,
+    staleTime: 0,
   });
 
   const withdrawals = trpc.admin.withdrawals.useQuery(undefined, {
     enabled: isAdmin,
-    refetchInterval: isMutating ? false : 10000,
+    refetchInterval: isMutating ? false : 3000,
     refetchOnWindowFocus: true,
+    staleTime: 0,
   });
 
   const adminNotifications = trpc.admin.listNotifications.useQuery(undefined, {
@@ -216,6 +279,8 @@ export default function AdminScreen() {
     const current = pendingRequestAction;
     const key = `${current.kind}:${current.id}`;
     setBusyRequestKey(key);
+    // أغلق نافذة التأكيد فورًا ليبدو التحديث فوريًا (الـ optimistic update يعمل في onMutate)
+    setPendingRequestAction(null);
 
     const mutation =
       current.kind === "approveDeposit"
@@ -232,30 +297,23 @@ export default function AdminScreen() {
         { requestId: current.id },
         {
           onSuccess: () => {
-            setPendingRequestAction(null);
+            setBusyRequestKey(null);
           },
           onError: (e: any) => {
             const msg = String(e?.message ?? "");
-            // 10003 = a transient connection error while checking the
-            // session (safe and expected to retry). 10002 is kept here
-            // too for backward compatibility with already-deployed
-            // clients, but after the server-side fix it should no
-            // longer be thrown for connection issues.
+            // 10003 = transient connection / session issue (safe to retry).
+            // 10002 kept for backward compatibility with older server builds.
             const isTransientErr =
               msg.includes("10003") || msg.includes("10002") || msg.toLowerCase().includes("permission");
             if (attempt < 3 && isTransientErr) {
-              // إعادة المحاولة بدون إزعاج المستخدم
               setTimeout(() => runOnce(attempt + 1), 700 * (attempt + 1));
               return;
             }
+            setBusyRequestKey(null);
             setFeedback({ title: "تعذر التنفيذ", message: msg });
-            setPendingRequestAction(null);
           },
           onSettled: () => {
-            // فقط آخر محاولة تُنهي حالة busy
-            if (attempt === 0) {
-              setBusyRequestKey(null);
-            }
+            // busy cleared in onSuccess / final onError
           },
         }
       );
