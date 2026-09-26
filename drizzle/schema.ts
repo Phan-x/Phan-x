@@ -91,6 +91,10 @@ export const users = pgTable("users", {
     .default(false)
     .notNull(),
 
+  withdrawalLocked: boolean("withdrawalLocked")
+    .default(false)
+    .notNull(),
+
   bannedReason: text("bannedReason"),
 
   bannedAt: timestamp("bannedAt"),
