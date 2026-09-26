@@ -46,137 +46,126 @@ export default function AdminScreen() {
   const utils = trpc.useUtils();
 
   // ====== Mutations first (so isMutating can gate refetchInterval) ======
+  const removeDeposit = (requestId: number) => {
+    utils.admin.deposits.setData({ pendingOnly: true }, (old: any) =>
+      (old || []).filter((x: any) => Number(x?.request?.id) !== Number(requestId)),
+    );
+    utils.admin.deposits.setData(undefined, (old: any) =>
+      (old || []).filter((x: any) => Number(x?.request?.id) !== Number(requestId)),
+    );
+  };
+  const removeWithdrawal = (requestId: number) => {
+    utils.admin.withdrawals.setData({ pendingOnly: true }, (old: any) =>
+      (old || []).filter((x: any) => Number(x?.request?.id) !== Number(requestId)),
+    );
+    utils.admin.withdrawals.setData(undefined, (old: any) =>
+      (old || []).filter((x: any) => Number(x?.request?.id) !== Number(requestId)),
+    );
+  };
+
   const approveDeposit = trpc.admin.approveDeposit.useMutation({
     onMutate: async ({ requestId }) => {
-      await utils.admin.deposits.cancel();
-      await utils.admin.stats.cancel();
-      const prev = utils.admin.deposits.getData();
+      await Promise.all([utils.admin.deposits.cancel(), utils.admin.stats.cancel()]);
+      const prevDep = utils.admin.deposits.getData({ pendingOnly: true });
+      const prevDepAll = utils.admin.deposits.getData();
       const prevStats = utils.admin.stats.getData();
-      utils.admin.deposits.setData(undefined, (old: any) =>
-        (old || []).map((x: any) =>
-          x.request.id === requestId
-            ? { ...x, request: { ...x.request, status: "approved" } }
-            : x
-        )
-      );
+      removeDeposit(requestId);
       if (prevStats) {
         utils.admin.stats.setData(undefined, {
           ...prevStats,
           pendingDeposits: Math.max(0, Number(prevStats.pendingDeposits ?? 0) - 1),
         });
       }
-      return { prev, prevStats };
+      return { prevDep, prevDepAll, prevStats };
     },
     onError: (_e, _v, ctx: any) => {
-      if (ctx?.prev) utils.admin.deposits.setData(undefined, ctx.prev);
+      if (ctx?.prevDep) utils.admin.deposits.setData({ pendingOnly: true }, ctx.prevDep);
+      if (ctx?.prevDepAll) utils.admin.deposits.setData(undefined, ctx.prevDepAll);
       if (ctx?.prevStats) utils.admin.stats.setData(undefined, ctx.prevStats);
     },
-    onSettled: async () => {
-      await Promise.all([
-        utils.admin.deposits.invalidate(),
-        utils.admin.stats.invalidate(),
-        utils.wallet.balances.invalidate(),
-      ]);
+    onSettled: () => {
+      void utils.admin.deposits.invalidate();
+      void utils.admin.stats.invalidate();
+      void utils.wallet.balances.invalidate();
     },
   });
 
   const rejectDeposit = trpc.admin.rejectDeposit.useMutation({
     onMutate: async ({ requestId }) => {
-      await utils.admin.deposits.cancel();
-      await utils.admin.stats.cancel();
-      const prev = utils.admin.deposits.getData();
+      await Promise.all([utils.admin.deposits.cancel(), utils.admin.stats.cancel()]);
+      const prevDep = utils.admin.deposits.getData({ pendingOnly: true });
+      const prevDepAll = utils.admin.deposits.getData();
       const prevStats = utils.admin.stats.getData();
-      utils.admin.deposits.setData(undefined, (old: any) =>
-        (old || []).map((x: any) =>
-          x.request.id === requestId
-            ? { ...x, request: { ...x.request, status: "rejected" } }
-            : x
-        )
-      );
+      removeDeposit(requestId);
       if (prevStats) {
         utils.admin.stats.setData(undefined, {
           ...prevStats,
           pendingDeposits: Math.max(0, Number(prevStats.pendingDeposits ?? 0) - 1),
         });
       }
-      return { prev, prevStats };
+      return { prevDep, prevDepAll, prevStats };
     },
     onError: (_e, _v, ctx: any) => {
-      if (ctx?.prev) utils.admin.deposits.setData(undefined, ctx.prev);
+      if (ctx?.prevDep) utils.admin.deposits.setData({ pendingOnly: true }, ctx.prevDep);
+      if (ctx?.prevDepAll) utils.admin.deposits.setData(undefined, ctx.prevDepAll);
       if (ctx?.prevStats) utils.admin.stats.setData(undefined, ctx.prevStats);
     },
-    onSettled: async () => {
-      await Promise.all([
-        utils.admin.deposits.invalidate(),
-        utils.admin.stats.invalidate(),
-      ]);
+    onSettled: () => {
+      void utils.admin.deposits.invalidate();
+      void utils.admin.stats.invalidate();
     },
   });
 
   const approveWithdrawal = trpc.admin.approveWithdrawal.useMutation({
     onMutate: async ({ requestId }) => {
-      await utils.admin.withdrawals.cancel();
-      await utils.admin.stats.cancel();
-      const prev = utils.admin.withdrawals.getData();
+      await Promise.all([utils.admin.withdrawals.cancel(), utils.admin.stats.cancel()]);
+      const prevWd = utils.admin.withdrawals.getData({ pendingOnly: true });
+      const prevWdAll = utils.admin.withdrawals.getData();
       const prevStats = utils.admin.stats.getData();
-      utils.admin.withdrawals.setData(undefined, (old: any) =>
-        (old || []).map((x: any) =>
-          x.request.id === requestId
-            ? { ...x, request: { ...x.request, status: "approved" } }
-            : x
-        )
-      );
+      removeWithdrawal(requestId);
       if (prevStats) {
         utils.admin.stats.setData(undefined, {
           ...prevStats,
           pendingWithdrawals: Math.max(0, Number(prevStats.pendingWithdrawals ?? 0) - 1),
         });
       }
-      return { prev, prevStats };
+      return { prevWd, prevWdAll, prevStats };
     },
     onError: (_e, _v, ctx: any) => {
-      if (ctx?.prev) utils.admin.withdrawals.setData(undefined, ctx.prev);
+      if (ctx?.prevWd) utils.admin.withdrawals.setData({ pendingOnly: true }, ctx.prevWd);
+      if (ctx?.prevWdAll) utils.admin.withdrawals.setData(undefined, ctx.prevWdAll);
       if (ctx?.prevStats) utils.admin.stats.setData(undefined, ctx.prevStats);
     },
-    onSettled: async () => {
-      await Promise.all([
-        utils.admin.withdrawals.invalidate(),
-        utils.admin.stats.invalidate(),
-        utils.wallet.balances.invalidate(),
-      ]);
+    onSettled: () => {
+      void utils.admin.withdrawals.invalidate();
+      void utils.admin.stats.invalidate();
+      void utils.wallet.balances.invalidate();
     },
   });
 
   const rejectWithdrawal = trpc.admin.rejectWithdrawal.useMutation({
     onMutate: async ({ requestId }) => {
-      await utils.admin.withdrawals.cancel();
-      await utils.admin.stats.cancel();
-      const prev = utils.admin.withdrawals.getData();
+      await Promise.all([utils.admin.withdrawals.cancel(), utils.admin.stats.cancel()]);
+      const prevWd = utils.admin.withdrawals.getData({ pendingOnly: true });
+      const prevWdAll = utils.admin.withdrawals.getData();
       const prevStats = utils.admin.stats.getData();
-      utils.admin.withdrawals.setData(undefined, (old: any) =>
-        (old || []).map((x: any) =>
-          x.request.id === requestId
-            ? { ...x, request: { ...x.request, status: "rejected" } }
-            : x
-        )
-      );
+      removeWithdrawal(requestId);
       if (prevStats) {
         utils.admin.stats.setData(undefined, {
           ...prevStats,
           pendingWithdrawals: Math.max(0, Number(prevStats.pendingWithdrawals ?? 0) - 1),
         });
       }
-      return { prev, prevStats };
+      return { prevWd, prevWdAll, prevStats };
     },
     onError: (_e, _v, ctx: any) => {
-      if (ctx?.prev) utils.admin.withdrawals.setData(undefined, ctx.prev);
+      if (ctx?.prevWd) utils.admin.withdrawals.setData({ pendingOnly: true }, ctx.prevWd);
+      if (ctx?.prevWdAll) utils.admin.withdrawals.setData(undefined, ctx.prevWdAll);
       if (ctx?.prevStats) utils.admin.stats.setData(undefined, ctx.prevStats);
     },
-    onSettled: async () => {
-      await Promise.all([
-        utils.admin.withdrawals.invalidate(),
-        utils.admin.stats.invalidate(),
-      ]);
+    onSettled: () => {
+      void utils.admin.withdrawals.invalidate();
+      void utils.admin.stats.invalidate();
     },
   });
 
@@ -186,32 +175,39 @@ export default function AdminScreen() {
     approveWithdrawal.isPending ||
     rejectWithdrawal.isPending;
 
-  // ====== Queries (auto-refresh, paused while mutating) ======
+  // ====== Queries: pending-only + fast polling (same feel as CwaAX) ======
   const stats = trpc.admin.stats.useQuery(undefined, {
     enabled: isAdmin,
-    refetchInterval: isMutating ? false : 5000,
+    refetchInterval: isMutating ? false : 4000,
     refetchOnWindowFocus: true,
     staleTime: 0,
   });
 
   const users = trpc.admin.users.useQuery(
     { search: query || undefined },
-    { enabled: isAdmin, refetchInterval: isMutating ? false : 10000, refetchOnWindowFocus: true, staleTime: 0 }
+    { enabled: isAdmin, refetchInterval: isMutating ? false : 8000, refetchOnWindowFocus: true, staleTime: 0 },
   );
 
-  const deposits = trpc.admin.deposits.useQuery(undefined, {
-    enabled: isAdmin,
-    refetchInterval: isMutating ? false : 3000,
-    refetchOnWindowFocus: true,
-    staleTime: 0,
-  });
+  // pendingOnly=true → السيرفر يرجع المعلقة فقط (أخف وأسرع)
+  const deposits = trpc.admin.deposits.useQuery(
+    { pendingOnly: true },
+    {
+      enabled: isAdmin,
+      refetchInterval: isMutating ? false : 2000,
+      refetchOnWindowFocus: true,
+      staleTime: 0,
+    },
+  );
 
-  const withdrawals = trpc.admin.withdrawals.useQuery(undefined, {
-    enabled: isAdmin,
-    refetchInterval: isMutating ? false : 3000,
-    refetchOnWindowFocus: true,
-    staleTime: 0,
-  });
+  const withdrawals = trpc.admin.withdrawals.useQuery(
+    { pendingOnly: true },
+    {
+      enabled: isAdmin,
+      refetchInterval: isMutating ? false : 2000,
+      refetchOnWindowFocus: true,
+      staleTime: 0,
+    },
+  );
 
   const adminNotifications = trpc.admin.listNotifications.useQuery(undefined, {
     enabled: isAdmin && tab === "الإشعارات",
@@ -247,10 +243,9 @@ export default function AdminScreen() {
     );
   }
 
-  const pendingDeposits = (deposits.data || []).filter((x: any) => x.request.status === "pending");
-  const pendingWithdrawals = (withdrawals.data || []).filter(
-    (x: any) => x.request.status === "pending"
-  );
+  // مع pendingOnly=true كل العناصر معلقة — لا حاجة لفلترة إضافية
+  const pendingDeposits = deposits.data || [];
+  const pendingWithdrawals = withdrawals.data || [];
 
   const requestAction = (kind: "dep" | "wd", id: number, operation: "approve" | "reject") => {
     const label = kind === "dep" ? "الإيداع" : "السحب";
@@ -360,12 +355,12 @@ export default function AdminScreen() {
               <Metric
                 icon="south-west"
                 label="إيداعات معلقة"
-                value={String(stats.data?.pendingDeposits ?? 0)}
+                value={String(pendingDeposits.length)}
               />
               <Metric
                 icon="north-east"
                 label="سحوبات معلقة"
-                value={String(stats.data?.pendingWithdrawals ?? 0)}
+                value={String(pendingWithdrawals.length)}
               />
               <Metric
                 icon="card-giftcard"
