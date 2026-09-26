@@ -658,6 +658,38 @@ export async function unbanUser(userId: number) {
     .where(eq(users.id, userId));
 }
 
+export async function lockWithdrawal(userId: number) {
+  const db = await getDb();
+
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  await db
+    .update(users)
+    .set({
+      withdrawalLocked: true,
+      updatedAt: new Date(),
+    })
+    .where(eq(users.id, userId));
+}
+
+export async function unlockWithdrawal(userId: number) {
+  const db = await getDb();
+
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  await db
+    .update(users)
+    .set({
+      withdrawalLocked: false,
+      updatedAt: new Date(),
+    })
+    .where(eq(users.id, userId));
+}
+
 /* =========================
    ADMIN: BALANCE ADJUSTMENT
 ========================= */
