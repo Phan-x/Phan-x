@@ -1396,39 +1396,33 @@ export async function createDepositRequest(
   return result[0]?.id ?? 0;
 }
 
-export async function listDepositRequests() {
+export async function listDepositRequests(opts?: { pendingOnly?: boolean }) {
   const db = await getDb();
 
   if (!db) {
     return [];
   }
 
-  return db
+  const q = db
     .select({
-      request:
-        depositRequests,
-
+      request: depositRequests,
       user: {
         id: users.id,
         name: users.name,
         email: users.email,
-        username:
-          users.username,
+        username: users.username,
       },
     })
     .from(depositRequests)
-    .leftJoin(
-      users,
-      eq(
-        users.id,
-        depositRequests.userId,
-      ),
-    )
-    .orderBy(
-      desc(
-        depositRequests.createdAt,
-      ),
-    );
+    .leftJoin(users, eq(users.id, depositRequests.userId));
+
+  if (opts?.pendingOnly) {
+    return q
+      .where(eq(depositRequests.status, "pending"))
+      .orderBy(desc(depositRequests.createdAt));
+  }
+
+  return q.orderBy(desc(depositRequests.createdAt));
 }
 
 /* =========================
@@ -1555,39 +1549,33 @@ export async function createWithdrawalRequest(
   );
 }
 
-export async function listWithdrawalRequests() {
+export async function listWithdrawalRequests(opts?: { pendingOnly?: boolean }) {
   const db = await getDb();
 
   if (!db) {
     return [];
   }
 
-  return db
+  const q = db
     .select({
-      request:
-        withdrawalRequests,
-
+      request: withdrawalRequests,
       user: {
         id: users.id,
         name: users.name,
         email: users.email,
-        username:
-          users.username,
+        username: users.username,
       },
     })
     .from(withdrawalRequests)
-    .leftJoin(
-      users,
-      eq(
-        users.id,
-        withdrawalRequests.userId,
-      ),
-    )
-    .orderBy(
-      desc(
-        withdrawalRequests.createdAt,
-      ),
-    );
+    .leftJoin(users, eq(users.id, withdrawalRequests.userId));
+
+  if (opts?.pendingOnly) {
+    return q
+      .where(eq(withdrawalRequests.status, "pending"))
+      .orderBy(desc(withdrawalRequests.createdAt));
+  }
+
+  return q.orderBy(desc(withdrawalRequests.createdAt));
 }
 
 /* =========================
