@@ -46,33 +46,51 @@ export default function AdminScreen() {
   const utils = trpc.useUtils();
 
   // ====== Mutations first (so isMutating can gate refetchInterval) ======
+  // كاشان: المعلقة (سريعة للنظرة العامة) + السجل الكامل (لتبويب الإيداعات/السحوبات)
+  const DEP_PENDING = { pendingOnly: true } as const;
+  const DEP_ALL = { pendingOnly: false } as const;
+  const WD_PENDING = { pendingOnly: true } as const;
+  const WD_ALL = { pendingOnly: false } as const;
+
   const markDeposit = (requestId: number, status: "approved" | "rejected") => {
-    const patch = (old: any) =>
+    // من قائمة المعلقة: احذف فورًا
+    utils.admin.deposits.setData(DEP_PENDING, (old: any) =>
+      (old || []).filter((x: any) => Number(x?.request?.id) !== Number(requestId)),
+    );
+    // في السجل الكامل: غيّر الحالة فقط (يبقى ظاهرًا في التبويب)
+    const patchStatus = (old: any) =>
       (old || []).map((x: any) =>
         Number(x?.request?.id) === Number(requestId)
           ? { ...x, request: { ...x.request, status } }
           : x,
       );
-    utils.admin.deposits.setData(undefined, patch);
-    utils.admin.deposits.setData({ pendingOnly: true }, patch);
-    utils.admin.deposits.setData({ pendingOnly: false }, patch);
+    utils.admin.deposits.setData(DEP_ALL, patchStatus);
+    utils.admin.deposits.setData(undefined, patchStatus);
   };
+
   const markWithdrawal = (requestId: number, status: "approved" | "rejected") => {
-    const patch = (old: any) =>
+    utils.admin.withdrawals.setData(WD_PENDING, (old: any) =>
+      (old || []).filter((x: any) => Number(x?.request?.id) !== Number(requestId)),
+    );
+    const patchStatus = (old: any) =>
       (old || []).map((x: any) =>
         Number(x?.request?.id) === Number(requestId)
           ? { ...x, request: { ...x.request, status } }
           : x,
       );
-    utils.admin.withdrawals.setData(undefined, patch);
-    utils.admin.withdrawals.setData({ pendingOnly: true }, patch);
-    utils.admin.withdrawals.setData({ pendingOnly: false }, patch);
+    utils.admin.withdrawals.setData(WD_ALL, patchStatus);
+    utils.admin.withdrawals.setData(undefined, patchStatus);
   };
 
   const approveDeposit = trpc.admin.approveDeposit.useMutation({
     onMutate: async ({ requestId }) => {
-      await Promise.all([utils.admin.deposits.cancel(), utils.admin.stats.cancel()]);
-      const prevDep = utils.admin.deposits.getData();
+      await Promise.all([
+        utils.admin.deposits.cancel(),
+        utils.admin.stats.cancel(),
+      ]);
+      const prevPending = utils.admin.deposits.getData(DEP_PENDING);
+      const prevAll = utils.admin.deposits.getData(DEP_ALL);
+      const prevUndef = utils.admin.deposits.getData();
       const prevStats = utils.admin.stats.getData();
       markDeposit(requestId, "approved");
       if (prevStats) {
@@ -81,10 +99,12 @@ export default function AdminScreen() {
           pendingDeposits: Math.max(0, Number(prevStats.pendingDeposits ?? 0) - 1),
         });
       }
-      return { prevDep, prevStats };
+      return { prevPending, prevAll, prevUndef, prevStats };
     },
     onError: (_e, _v, ctx: any) => {
-      if (ctx?.prevDep) utils.admin.deposits.setData(undefined, ctx.prevDep);
+      if (ctx?.prevPending) utils.admin.deposits.setData(DEP_PENDING, ctx.prevPending);
+      if (ctx?.prevAll) utils.admin.deposits.setData(DEP_ALL, ctx.prevAll);
+      if (ctx?.prevUndef) utils.admin.deposits.setData(undefined, ctx.prevUndef);
       if (ctx?.prevStats) utils.admin.stats.setData(undefined, ctx.prevStats);
     },
     onSettled: () => {
@@ -97,7 +117,9 @@ export default function AdminScreen() {
   const rejectDeposit = trpc.admin.rejectDeposit.useMutation({
     onMutate: async ({ requestId }) => {
       await Promise.all([utils.admin.deposits.cancel(), utils.admin.stats.cancel()]);
-      const prevDep = utils.admin.deposits.getData();
+      const prevPending = utils.admin.deposits.getData(DEP_PENDING);
+      const prevAll = utils.admin.deposits.getData(DEP_ALL);
+      const prevUndef = utils.admin.deposits.getData();
       const prevStats = utils.admin.stats.getData();
       markDeposit(requestId, "rejected");
       if (prevStats) {
@@ -106,10 +128,12 @@ export default function AdminScreen() {
           pendingDeposits: Math.max(0, Number(prevStats.pendingDeposits ?? 0) - 1),
         });
       }
-      return { prevDep, prevStats };
+      return { prevPending, prevAll, prevUndef, prevStats };
     },
     onError: (_e, _v, ctx: any) => {
-      if (ctx?.prevDep) utils.admin.deposits.setData(undefined, ctx.prevDep);
+      if (ctx?.prevPending) utils.admin.deposits.setData(DEP_PENDING, ctx.prevPending);
+      if (ctx?.prevAll) utils.admin.deposits.setData(DEP_ALL, ctx.prevAll);
+      if (ctx?.prevUndef) utils.admin.deposits.setData(undefined, ctx.prevUndef);
       if (ctx?.prevStats) utils.admin.stats.setData(undefined, ctx.prevStats);
     },
     onSettled: () => {
@@ -121,7 +145,9 @@ export default function AdminScreen() {
   const approveWithdrawal = trpc.admin.approveWithdrawal.useMutation({
     onMutate: async ({ requestId }) => {
       await Promise.all([utils.admin.withdrawals.cancel(), utils.admin.stats.cancel()]);
-      const prevWd = utils.admin.withdrawals.getData();
+      const prevPending = utils.admin.withdrawals.getData(WD_PENDING);
+      const prevAll = utils.admin.withdrawals.getData(WD_ALL);
+      const prevUndef = utils.admin.withdrawals.getData();
       const prevStats = utils.admin.stats.getData();
       markWithdrawal(requestId, "approved");
       if (prevStats) {
@@ -130,10 +156,12 @@ export default function AdminScreen() {
           pendingWithdrawals: Math.max(0, Number(prevStats.pendingWithdrawals ?? 0) - 1),
         });
       }
-      return { prevWd, prevStats };
+      return { prevPending, prevAll, prevUndef, prevStats };
     },
     onError: (_e, _v, ctx: any) => {
-      if (ctx?.prevWd) utils.admin.withdrawals.setData(undefined, ctx.prevWd);
+      if (ctx?.prevPending) utils.admin.withdrawals.setData(WD_PENDING, ctx.prevPending);
+      if (ctx?.prevAll) utils.admin.withdrawals.setData(WD_ALL, ctx.prevAll);
+      if (ctx?.prevUndef) utils.admin.withdrawals.setData(undefined, ctx.prevUndef);
       if (ctx?.prevStats) utils.admin.stats.setData(undefined, ctx.prevStats);
     },
     onSettled: () => {
@@ -146,7 +174,9 @@ export default function AdminScreen() {
   const rejectWithdrawal = trpc.admin.rejectWithdrawal.useMutation({
     onMutate: async ({ requestId }) => {
       await Promise.all([utils.admin.withdrawals.cancel(), utils.admin.stats.cancel()]);
-      const prevWd = utils.admin.withdrawals.getData();
+      const prevPending = utils.admin.withdrawals.getData(WD_PENDING);
+      const prevAll = utils.admin.withdrawals.getData(WD_ALL);
+      const prevUndef = utils.admin.withdrawals.getData();
       const prevStats = utils.admin.stats.getData();
       markWithdrawal(requestId, "rejected");
       if (prevStats) {
@@ -155,10 +185,12 @@ export default function AdminScreen() {
           pendingWithdrawals: Math.max(0, Number(prevStats.pendingWithdrawals ?? 0) - 1),
         });
       }
-      return { prevWd, prevStats };
+      return { prevPending, prevAll, prevUndef, prevStats };
     },
     onError: (_e, _v, ctx: any) => {
-      if (ctx?.prevWd) utils.admin.withdrawals.setData(undefined, ctx.prevWd);
+      if (ctx?.prevPending) utils.admin.withdrawals.setData(WD_PENDING, ctx.prevPending);
+      if (ctx?.prevAll) utils.admin.withdrawals.setData(WD_ALL, ctx.prevAll);
+      if (ctx?.prevUndef) utils.admin.withdrawals.setData(undefined, ctx.prevUndef);
       if (ctx?.prevStats) utils.admin.stats.setData(undefined, ctx.prevStats);
     },
     onSettled: () => {
@@ -173,7 +205,7 @@ export default function AdminScreen() {
     approveWithdrawal.isPending ||
     rejectWithdrawal.isPending;
 
-  // ====== Queries: pending-only + fast polling (same feel as CwaAX) ======
+  // ====== Queries ======
   const stats = trpc.admin.stats.useQuery(undefined, {
     enabled: isAdmin,
     refetchInterval: isMutating ? false : 4000,
@@ -186,17 +218,32 @@ export default function AdminScreen() {
     { enabled: isAdmin, refetchInterval: isMutating ? false : 8000, refetchOnWindowFocus: true, staleTime: 0 },
   );
 
-  // سجل كامل (معلق + مقبول + مرفوض) — الفلترة للمعلقة على الواجهة فقط
-  const deposits = trpc.admin.deposits.useQuery(undefined, {
+  // 1) معلقة فقط — خفيفة وسريعة (نظرة عامة + العدادات)
+  const depositsPending = trpc.admin.deposits.useQuery(DEP_PENDING, {
     enabled: isAdmin,
-    refetchInterval: isMutating ? false : 2500,
+    refetchInterval: isMutating ? false : 2000,
     refetchOnWindowFocus: true,
     staleTime: 0,
   });
 
-  const withdrawals = trpc.admin.withdrawals.useQuery(undefined, {
+  const withdrawalsPending = trpc.admin.withdrawals.useQuery(WD_PENDING, {
     enabled: isAdmin,
-    refetchInterval: isMutating ? false : 2500,
+    refetchInterval: isMutating ? false : 2000,
+    refetchOnWindowFocus: true,
+    staleTime: 0,
+  });
+
+  // 2) السجل الكامل — يُحمَّل فقط عند فتح تبويب الإيداعات/السحوبات
+  const depositsHistory = trpc.admin.deposits.useQuery(DEP_ALL, {
+    enabled: isAdmin && tab === "الإيداعات",
+    refetchInterval: isMutating ? false : 5000,
+    refetchOnWindowFocus: true,
+    staleTime: 0,
+  });
+
+  const withdrawalsHistory = trpc.admin.withdrawals.useQuery(WD_ALL, {
+    enabled: isAdmin && tab === "السحوبات",
+    refetchInterval: isMutating ? false : 5000,
     refetchOnWindowFocus: true,
     staleTime: 0,
   });
@@ -235,12 +282,8 @@ export default function AdminScreen() {
     );
   }
 
-  const pendingDeposits = (deposits.data || []).filter(
-    (x: any) => x?.request?.status === "pending",
-  );
-  const pendingWithdrawals = (withdrawals.data || []).filter(
-    (x: any) => x?.request?.status === "pending",
-  );
+  const pendingDeposits = depositsPending.data || [];
+  const pendingWithdrawals = withdrawalsPending.data || [];
 
   const requestAction = (kind: "dep" | "wd", id: number, operation: "approve" | "reject") => {
     const label = kind === "dep" ? "الإيداع" : "السحب";
@@ -495,7 +538,10 @@ export default function AdminScreen() {
               />
             </View>
             <Card>
-              {(tab === "الإيداعات" ? deposits.data || [] : withdrawals.data || []).map((x: any) => (
+              {(tab === "الإيداعات"
+                ? depositsHistory.data || []
+                : withdrawalsHistory.data || []
+              ).map((x: any) => (
                 <RequestRow
                   key={x.request.id}
                   row={x}
