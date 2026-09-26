@@ -19,6 +19,20 @@ function fmt(n: number | string | undefined | null) {
   return v.toLocaleString("en-US", { maximumFractionDigits: 4 });
 }
 
+/** تنسيق التاريخ والوقت بالعربية — يتعامل مع null/undefined بأمان */
+function fmtDate(value: string | Date | number | null | undefined) {
+  if (value == null || value === "") return "—";
+  const d = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(d.getTime())) return "—";
+  return d.toLocaleString("ar", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 export default function AdminScreen() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
@@ -737,6 +751,10 @@ function RequestRow({
           {r.network ? ` · ${r.network}` : ""}
         </Text>
         {type === "wd" && <Text style={styles.requestAddress}>{r.address}</Text>}
+        <Text style={styles.requestDate}>
+          {fmtDate(r.createdAt)}
+          {r.approvedAt ? ` · اعتماد: ${fmtDate(r.approvedAt)}` : ""}
+        </Text>
       </View>
       <View style={styles.requestActions}>
         {pending ? (
@@ -791,6 +809,11 @@ function UserRow({ user, onPress }: { user: any; onPress: () => void }) {
         <Text style={styles.userEmail} numberOfLines={1}>
           {user.email || user.openId}
         </Text>
+        {!!user.createdAt && (
+          <Text style={styles.userDate} numberOfLines={1}>
+            إنشاء الحساب: {fmtDate(user.createdAt)}
+          </Text>
+        )}
         <View style={styles.userChips}>
           <View style={styles.chip}>
             <MaterialIcons name="group-add" size={11} color={PHANX.green} />
@@ -894,6 +917,11 @@ function UserDetailModal({ userId, onClose }: { userId: number; onClose: () => v
                 <View style={{ flex: 1 }}>
                   <Text style={styles.sheetName}>{u.name || u.username || "بدون اسم"}</Text>
                   <Text style={styles.sheetSub}>{u.email || u.openId}</Text>
+                  {!!u.createdAt && (
+                    <Text style={styles.sheetDate}>
+                      إنشاء الحساب: {fmtDate(u.createdAt)}
+                    </Text>
+                  )}
                   <View style={styles.userChips}>
                     <StatusPill tone={u.role === "admin" ? "success" : "warning"}>
                       {u.role}
@@ -1649,6 +1677,7 @@ const styles = StyleSheet.create({
     marginTop: 3,
   },
   requestAddress: { color: PHANX.muted, fontSize: 8, textAlign: "right", marginTop: 3 },
+  requestDate: { color: PHANX.muted, fontSize: 8, textAlign: "right", marginTop: 4 },
   requestActions: { alignItems: "flex-end", gap: 5 },
   approve: {
     backgroundColor: PHANX.greenSoft,
@@ -1694,6 +1723,8 @@ const styles = StyleSheet.create({
   userCopy: { flex: 1 },
   userName: { color: PHANX.ink, textAlign: "right", fontSize: 11, fontWeight: "800" },
   userEmail: { color: PHANX.muted, textAlign: "right", fontSize: 8, marginTop: 2 },
+  userDate: { color: PHANX.muted, textAlign: "right", fontSize: 8, marginTop: 3 },
+  sheetDate: { color: PHANX.muted, textAlign: "right", fontSize: 9, marginTop: 4 },
   userChips: { flexDirection: "row-reverse", flexWrap: "wrap", gap: 6, marginTop: 6 },
   chip: {
     flexDirection: "row-reverse",
