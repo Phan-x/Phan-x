@@ -714,6 +714,12 @@ function UserRow({ user, onPress }: { user: any; onPress: () => void }) {
               <Text style={[styles.chipText, { color: PHANX.red }]}>محظور</Text>
             </View>
           )}
+          {user.withdrawalLocked && (
+            <View style={[styles.chip, styles.chipGold]}>
+              <MaterialIcons name="money-off" size={11} color={PHANX.gold} />
+              <Text style={[styles.chipText, { color: PHANX.gold }]}>السحب مقفل</Text>
+            </View>
+          )}
         </View>
       </View>
       <MaterialIcons name="chevron-left" size={20} color={PHANX.muted} />
@@ -730,6 +736,7 @@ type PanelMode = "detail" | "ban" | "password" | "balance" | "notify" | "level";
 function UserDetailModal({ userId, onClose }: { userId: number; onClose: () => void }) {
   const [mode, setMode] = useState<PanelMode>("detail");
   const [confirmUnban, setConfirmUnban] = useState(false);
+  const [confirmWithdrawalLock, setConfirmWithdrawalLock] = useState<"lock" | "unlock" | null>(null);
   const [levelSelected, setLevelSelected] = useState<1 | 2 | 3>(1);
   const detail = trpc.admin.userDetail.useQuery({ userId });
   const utils = trpc.useUtils();
@@ -747,6 +754,8 @@ function UserDetailModal({ userId, onClose }: { userId: number; onClose: () => v
     },
   });
   const unbanMutation = trpc.admin.unbanUser.useMutation({ onSuccess: refreshAll });
+  const lockWithdrawalMutation = trpc.admin.lockWithdrawal.useMutation({ onSuccess: refreshAll });
+  const unlockWithdrawalMutation = trpc.admin.unlockWithdrawal.useMutation({ onSuccess: refreshAll });
   const passwordMutation = trpc.admin.setUserPassword.useMutation({
     onSuccess: () => setMode("detail"),
   });
@@ -796,6 +805,7 @@ function UserDetailModal({ userId, onClose }: { userId: number; onClose: () => v
                       {u.role}
                     </StatusPill>
                     {u.isBanned && <StatusPill tone="danger">محظور</StatusPill>}
+                    {u.withdrawalLocked && <StatusPill tone="warning">السحب مقفل</StatusPill>}
                   </View>
                 </View>
                 <Pressable onPress={onClose} hitSlop={10}>
@@ -876,6 +886,12 @@ function UserDetailModal({ userId, onClose }: { userId: number; onClose: () => v
                   tone={u.isBanned ? PHANX.green : PHANX.red}
                   onPress={() => (u.isBanned ? setConfirmUnban(true) : setMode("ban"))}
                 />
+                <ActionBtn
+                  icon={u.withdrawalLocked ? "lock-open" : "money-off"}
+                  label={u.withdrawalLocked ? "فتح السحب" : "قفل السحب"}
+                  tone={u.withdrawalLocked ? PHANX.green : PHANX.gold}
+                  onPress={() => setConfirmWithdrawalLock(u.withdrawalLocked ? "unlock" : "lock")}
+                />
               </View>
             </ScrollView>
           ) : mode === "level" ? (
@@ -941,6 +957,35 @@ function UserDetailModal({ userId, onClose }: { userId: number; onClose: () => v
                 }
               )
             }
+          />
+          <ConfirmModal
+            visible={confirmWithdrawalLock !== null}
+            title={confirmWithdrawalLock === "lock" ? "تأكيد قفل السحب" : "تأكيد فتح السحب"}
+            message={
+              confirmWithdrawalLock === "lock"
+                ? "هل أنت متأكد من قفل السحب لهذا الحساب؟ لن يتمكن المستخدم من تقديم أي طلب سحب حتى تفتحه."
+                : "هل أنت متأكد من فتح السحب لهذا الحساب؟"
+            }
+            busy={lockWithdrawalMutation.isPending || unlockWithdrawalMutation.isPending}
+            onCancel={() =>
+              !(lockWithdrawalMutation.isPending || unlockWithdrawalMutation.isPending) &&
+              setConfirmWithdrawalLock(null)
+            }
+            onConfirm={() => {
+              const mutation =
+                confirmWithdrawalLock === "lock" ? lockWithdrawalMutation : unlockWithdrawalMutation;
+              mutation.mutate(
+                { userId },
+                {
+                  onSuccess: () => setConfirmWithdrawalLock(null),
+                  onError: (e) =>
+                    notify(
+                      confirmWithdrawalLock === "lock" ? "تعذر قفل السحب" : "تعذر فتح السحب",
+                      e.message,
+                    ),
+                },
+              );
+            }}
           />
         </View>
       </View>
