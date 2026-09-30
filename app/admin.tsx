@@ -889,6 +889,10 @@ function UserDetailModal({ userId, onClose }: { userId: number; onClose: () => v
   const u = detail.data?.user;
   const referral = detail.data?.referral;
   const balances = detail.data?.balances || [];
+  const invitedBy = detail.data?.invitedBy as
+    | { id: number; name: string | null; username: string | null; email: string | null; referralCode: string | null }
+    | null
+    | undefined;
 
   return (
     <Modal visible transparent animationType="slide" onRequestClose={onClose}>
@@ -933,6 +937,19 @@ function UserDetailModal({ userId, onClose }: { userId: number; onClose: () => v
                 <Pressable onPress={onClose} hitSlop={10}>
                   <MaterialIcons name="close" size={22} color={PHANX.muted} />
                 </Pressable>
+              </View>
+
+              <View style={styles.invitedByBox}>
+                <MaterialIcons name="person-add" size={16} color={PHANX.green} />
+                <Text style={styles.invitedByText}>
+                  {invitedBy
+                    ? `تمت دعوته بواسطة: ${invitedBy.name || invitedBy.username || "بدون اسم"}${
+                        invitedBy.username ? ` (@${invitedBy.username})` : ""
+                      }${invitedBy.email ? ` · ${invitedBy.email}` : ""}${
+                        invitedBy.referralCode ? ` · كود: ${invitedBy.referralCode}` : ""
+                      }`
+                    : "لم يتم دعوته من أي مستخدم (تسجيل مباشر)"}
+                </Text>
               </View>
 
               {u.isBanned && !!u.bannedReason && (
@@ -1725,6 +1742,25 @@ const styles = StyleSheet.create({
   userEmail: { color: PHANX.muted, textAlign: "right", fontSize: 8, marginTop: 2 },
   userDate: { color: PHANX.muted, textAlign: "right", fontSize: 8, marginTop: 3 },
   sheetDate: { color: PHANX.muted, textAlign: "right", fontSize: 9, marginTop: 4 },
+  invitedByBox: {
+    flexDirection: "row-reverse",
+    alignItems: "flex-start",
+    gap: 8,
+    backgroundColor: PHANX.greenSoft,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    marginTop: 10,
+    marginBottom: 4,
+  },
+  invitedByText: {
+    flex: 1,
+    color: PHANX.ink,
+    fontSize: 11,
+    fontWeight: "700",
+    textAlign: "right",
+    lineHeight: 18,
+  },
   userChips: { flexDirection: "row-reverse", flexWrap: "wrap", gap: 6, marginTop: 6 },
   chip: {
     flexDirection: "row-reverse",
