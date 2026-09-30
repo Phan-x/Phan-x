@@ -601,7 +601,7 @@ export async function getAdminUserDetail(userId: number) {
     return null;
   }
 
-  const [referral, balances, recentTransactions] = await Promise.all([
+  const [referral, balances, recentTransactions, invitedBy] = await Promise.all([
     getReferralStats(userId),
     db
       .select()
@@ -613,9 +613,24 @@ export async function getAdminUserDetail(userId: number) {
       .where(eq(transactions.userId, userId))
       .orderBy(desc(transactions.createdAt))
       .limit(20),
+    // من دعا هذا المستخدم (إن وُجد referredById)
+    user.referredById
+      ? db
+          .select({
+            id: users.id,
+            name: users.name,
+            username: users.username,
+            email: users.email,
+            referralCode: users.referralCode,
+          })
+          .from(users)
+          .where(eq(users.id, user.referredById))
+          .limit(1)
+          .then((rows) => rows[0] ?? null)
+      : Promise.resolve(null),
   ]);
 
-  return { user, referral, balances, recentTransactions };
+  return { user, referral, balances, recentTransactions, invitedBy };
 }
 
 /* =========================
