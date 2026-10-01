@@ -1463,6 +1463,59 @@ export async function createWithdrawalRequest(
 
   return db.transaction(
     async (tx) => {
+      // Enforce a 24-hour cooldown between withdrawal requests: look up the
+      // user's most recent request and block a new one if less than 24h
+      // have passed since it was created. Checked inside the transaction so
+      // it's consistent with the balance debit that follows.
+      const lastRequest =
+        await tx
+          .select({
+            createdAt:
+              withdrawalRequests.createdAt,
+          })
+          .from(
+            withdrawalRequests,
+          )
+          .where(
+            eq(
+              withdrawalRequests.userId,
+              data.userId,
+            ),
+          )
+          .orderBy(
+            desc(
+              withdrawalRequests.createdAt,
+            ),
+          )
+          .limit(1);
+
+      const WITHDRAWAL_COOLDOWN_MS =
+        24 * 60 * 60 * 1000;
+
+      if (lastRequest.length) {
+        const elapsed =
+          Date.now() -
+          lastRequest[0].createdAt.getTime();
+
+        if (
+          elapsed <
+          WITHDRAWAL_COOLDOWN_MS
+        ) {
+          const remainingMs =
+            WITHDRAWAL_COOLDOWN_MS -
+            elapsed;
+          const remainingHours =
+            Math.ceil(
+              remainingMs /
+                (60 * 60 * 1000),
+            );
+
+          throw new Error(
+            `يمكنك طلب سحب واحد كل 24 ساعة. حاول مرة أخرى بعد ${remainingHours} ساعة تقريباً.`,
+          );
+        }
+      }
+
       // Hold the funds immediately: atomically debit the balance only if
       // enough is available. Using a conditional UPDATE (amount >= data.amount)
       // instead of a separate SELECT-then-UPDATE prevents a race where two
