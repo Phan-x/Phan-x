@@ -14,6 +14,7 @@ import {
 
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
+import { TRPCError } from "@trpc/server";
 
 import {
   InsertUser,
@@ -1510,9 +1511,10 @@ export async function createWithdrawalRequest(
                 (60 * 60 * 1000),
             );
 
-          throw new Error(
-            `يمكنك طلب سحب واحد كل 24 ساعة. حاول مرة أخرى بعد ${remainingHours} ساعة تقريباً.`,
-          );
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: `يجب الانتظار 24 ساعة بين كل طلب سحب وآخر. حاول مرة أخرى بعد ${remainingHours} ساعة تقريباً.`,
+          });
         }
       }
 
@@ -1556,9 +1558,10 @@ export async function createWithdrawalRequest(
           });
 
       if (!debited.length) {
-        throw new Error(
-          "Insufficient balance",
-        );
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "الرصيد غير كافٍ لإتمام عملية السحب",
+        });
       }
 
       const result =
