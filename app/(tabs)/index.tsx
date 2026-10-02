@@ -4,6 +4,7 @@ import { Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-nati
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { ScreenContainer } from "@/components/screen-container";
 import { Card, PhanLogo, IconButton } from "@/components/phanx-ui";
+import { AnnouncementModal, ANNOUNCEMENT_ENABLED } from "@/components/announcement-modal";
 import { PHANX, quickActions } from "@/constants/phanx";
 import { formatAmount } from "@/constants/currencies";
 import type { CurrencyCode } from "@/lib/_core/preferences";
@@ -25,6 +26,7 @@ export default function HomeScreen() {
   const [currency, setCurrency] = useState<CurrencyCode>("USD");
   useFocusEffect(useCallback(() => { Preferences.getCurrency().then(setCurrency); }, []));
   const total = formatAmount(usdt, currency);
+  const [showAnnouncement, setShowAnnouncement] = useState(ANNOUNCEMENT_ENABLED);
   const [notice, setNotice] = useState("");
   const showNotice = (message: string) => { setNotice(message); setTimeout(() => setNotice(""), 2200); };
   const [refreshing, setRefreshing] = useState(false);
@@ -43,6 +45,7 @@ export default function HomeScreen() {
 
   return (
     <ScreenContainer className="px-5" edges={["top", "left", "right"]}>
+      <AnnouncementModal visible={showAnnouncement} onClose={() => setShowAnnouncement(false)} />
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
         <View style={styles.header}>
           <PhanLogo />
