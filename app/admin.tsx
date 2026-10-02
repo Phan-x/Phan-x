@@ -248,6 +248,29 @@ export default function AdminScreen() {
   });
 
   // 2) السجل الكامل — يُحمَّل فقط عند فتح تبويب الإيداعات/السحوبات
+  // تبويبا الإيداعات/السحوبات يستخدمان نفس حقل البحث للتصفية محلياً
+  // حسب رقم الطلب أو البريد الإلكتروني أو اسم المستخدم أو عنوان المحفظة
+  // (للسحوبات)، لأن الخادم يرجع كل الطلبات دفعة واحدة بلا فلترة.
+  const requestSearch = query.trim().toLowerCase();
+
+  const filterRequests = (rows: any[]) => {
+    if (!requestSearch) return rows;
+    return rows.filter((x: any) => {
+      const r = x?.request;
+      const u = x?.user;
+      const haystacks = [
+        r?.id != null ? String(r.id) : "",
+        u?.email || "",
+        u?.name || "",
+        u?.username || "",
+        r?.address || "",
+      ];
+      return haystacks.some((value) =>
+        String(value).toLowerCase().includes(requestSearch),
+      );
+    });
+  };
+
   const depositsHistory = trpc.admin.deposits.useQuery(DEP_ALL, {
     enabled: isAdmin && tab === "الإيداعات",
     refetchInterval: isMutating ? false : 5000,
@@ -546,15 +569,16 @@ export default function AdminScreen() {
               <TextInput
                 value={query}
                 onChangeText={setQuery}
-                placeholder="ابحث برقم الطلب"
+                placeholder="ابحث برقم الطلب أو البريد أو عنوان المحفظة"
                 placeholderTextColor="#9CA8A1"
                 style={styles.searchInput}
               />
             </View>
             <Card>
-              {(tab === "الإيداعات"
-                ? depositsHistory.data || []
-                : withdrawalsHistory.data || []
+              {filterRequests(
+                tab === "الإيداعات"
+                  ? depositsHistory.data || []
+                  : withdrawalsHistory.data || [],
               ).map((x: any) => (
                 <RequestRow
                   key={x.request.id}
