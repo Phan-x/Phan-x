@@ -14,6 +14,7 @@ import {
 
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
+import { TRPCError } from "@trpc/server";
 
 import {
   InsertUser,
@@ -1463,6 +1464,130 @@ export async function createWithdrawalRequest(
 
   return db.transaction(
     async (tx) => {
+      // Withdrawals are gated by the daily profit distribution, not by a
+      // fixed timer: a user's FIRST withdrawal is always free, but to
+      // withdraw again they must wait until at least one daily payout
+      // (tradePayouts) has landed after their last withdrawal request. This
+      // ties "can I withdraw again" to "has a new day's profit arrived" —
+      // checked inside the transaction so it's consistent with the debit
+      // that follows.
+      const lastRequest =
+        await tx
+          .select({
+            createdAt:
+              withdrawalRequests.createdAt,
+          })
+          .from(
+            withdrawalRequests,
+          )
+          .where(
+            eq(
+              withdrawalRequests.userId,
+              data.userId,
+            ),
+          )
+          .orderBy(
+            desc(
+              withdrawalRequests.createdAt,
+            ),
+          )
+          .limit(1);
+
+      if (lastRequest.length) {
+        const lastWithdrawalAt =
+          lastRequest[0].createdAt;
+
+        const payoutSinceLastWithdrawal =
+          await tx
+            .select({
+              paidAt:
+                tradePayouts.paidAt,
+            })
+            .from(
+              tradePayouts,
+            )
+            .where(
+              and(
+                eq(
+                  tradePayouts.userId,
+                  data.userId,
+                ),
+                sql`${tradePayouts.paidAt} > ${lastWithdrawalAt.toISOString()}`,
+              ),
+            )
+            .limit(1);
+
+        if (!payoutSinceLastWithdrawal.length) {
+          // No new daily profit has landed yet since the last withdrawal.
+          // Look up the nearest upcoming payout across the user's active
+          // contracts so the message can tell them roughly when to come
+          // back. If they have no active contract at all (nothing left to
+          // distribute), fall back to a flat 24h cooldown from their last
+          // request so they are never permanently stuck.
+          const nextPayout =
+            await tx
+              .select({
+                nextPayoutAt:
+                  tradeContracts.nextPayoutAt,
+              })
+              .from(
+                tradeContracts,
+              )
+              .where(
+                and(
+                  eq(
+                    tradeContracts.userId,
+                    data.userId,
+                  ),
+                  eq(
+                    tradeContracts.status,
+                    "active",
+                  ),
+                ),
+              )
+              .orderBy(
+                tradeContracts.nextPayoutAt,
+              )
+              .limit(1);
+
+          if (nextPayout.length) {
+            const remainingMs =
+              nextPayout[0].nextPayoutAt.getTime() -
+              Date.now();
+            const remainingHours = Math.max(
+              1,
+              Math.ceil(
+                remainingMs /
+                  (60 * 60 * 1000),
+              ),
+            );
+
+            throw new TRPCError({
+              code: "BAD_REQUEST",
+              message: `لا يمكنك السحب مرة أخرى إلا بعد توزيع الأرباح اليومية القادم لعقودك. حاول مرة أخرى بعد ${remainingHours} ساعة تقريباً.`,
+            });
+          }
+
+          const FALLBACK_COOLDOWN_MS =
+            24 * 60 * 60 * 1000;
+          const elapsed =
+            Date.now() -
+            lastWithdrawalAt.getTime();
+
+          if (elapsed < FALLBACK_COOLDOWN_MS) {
+            const remainingHours = Math.ceil(
+              (FALLBACK_COOLDOWN_MS - elapsed) /
+                (60 * 60 * 1000),
+            );
+
+            throw new TRPCError({
+              code: "BAD_REQUEST",
+              message: `يمكنك طلب سحب واحد كل 24 ساعة. حاول مرة أخرى بعد ${remainingHours} ساعة تقريباً.`,
+            });
+          }
+        }
+      }
+
       // Hold the funds immediately: atomically debit the balance only if
       // enough is available. Using a conditional UPDATE (amount >= data.amount)
       // instead of a separate SELECT-then-UPDATE prevents a race where two
@@ -1503,9 +1628,10 @@ export async function createWithdrawalRequest(
           });
 
       if (!debited.length) {
-        throw new Error(
-          "Insufficient balance",
-        );
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "الرصيد غير كافٍ لإتمام عملية السحب",
+        });
       }
 
       const result =
