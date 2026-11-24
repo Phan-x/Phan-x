@@ -1,0 +1,20 @@
+name = "cwaax"
+main = "worker/index.ts"
+compatibility_date = "2026-09-05"
+compatibility_flags = ["nodejs_compat"]
+
+[assets]
+directory = "./dist"
+binding = "ASSETS"
+run_worker_first = true
+not_found_handling = "single-page-application"
+
+[[hyperdrive]]
+binding = "HYPERDRIVE"
+id = "f6b94c3374244577bdc2ee1fd000fe28"
+
+[vars]
+API_ALLOWED_ORIGINS = "https://cwaax.vfshj.workers.dev"
+
+[triggers]
+crons = ["0 * * * *"]
