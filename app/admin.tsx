@@ -160,13 +160,13 @@ export default function AdminScreen() {
 
   const deposits = trpc.admin.deposits.useQuery(undefined, {
     enabled: isAdmin,
-    refetchInterval: isMutating ? false : 10000,
+    refetchInterval: isMutating ? false : 2000,
     refetchOnWindowFocus: true,
   });
 
   const withdrawals = trpc.admin.withdrawals.useQuery(undefined, {
     enabled: isAdmin,
-    refetchInterval: isMutating ? false : 10000,
+    refetchInterval: isMutating ? false : 2000,
     refetchOnWindowFocus: true,
   });
 
